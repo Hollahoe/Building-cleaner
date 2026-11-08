@@ -16,18 +16,19 @@
 2. [`ops/kakao-templates.md`](ops/kakao-templates.md): 멘토님께 보낼 메시지와 인터뷰 섭외 문구.
 3. [`interview/guide.md`](interview/guide.md): 건물주 인터뷰 질문 5개와 진행 방법.
 4. [`docs/legal-checklist.md`](docs/legal-checklist.md): **돈 받기 전에 꼭 읽기.** 보험·세무·법률 알선 수수료는 법적으로 막혀 있을 수 있습니다.
+5. [`docs/strategy.md`](docs/strategy.md)와 [`docs/investment.md`](docs/investment.md): 포지셔닝, 쐐기, 밀도 전략, 중단 기준, 그리고 VC 투자를 받을 수 있는지에 대한 판단.
 
 ## 레포 구조
 
 | 폴더 | 내용 | 쓰는 시점 |
 |---|---|---|
-| `docs/` | 전략([strategy](docs/strategy.md)), [30일 플랜](docs/30-day-plan.md), [법률 체크리스트](docs/legal-checklist.md) | 처음, 그리고 단계 바꿀 때 |
+| `docs/` | [전략](docs/strategy.md), [투자 가능성·자금 조달](docs/investment.md), [30일 플랜](docs/30-day-plan.md), [법률 체크리스트](docs/legal-checklist.md) | 처음, 그리고 단계 바꿀 때 |
 | `interview/` | [인터뷰 가이드](interview/guide.md), [기록지](interview/note-template.md), [고통 TOP 3 뽑는 법](interview/synthesis.md), [후보 리스트 CSV](interview/candidates.csv) | Week 1–2 |
 | `service/` | [서비스 범위](service/scope.md), [가격 모델](service/pricing.md), [1장 계약서 초안](service/contract-draft.md) | Week 3–4 |
 | `sourcing/` | [업체 견적 요청서](sourcing/rfq-template.md), [업체 DB CSV](sourcing/vendors.csv) | Week 3–4 |
 | `pilot/` | [건물 건강진단 리포트](pilot/building-health-report-template.md), [케이스 스터디](pilot/case-study-template.md) | Month 2–3 |
 | `ops/` | [건물 대장 CSV](ops/buildings.csv), [민원·이슈 로그 CSV](ops/issue-log.csv), [법정 점검 캘린더](ops/compliance-calendar.md), [카톡 문구](ops/kakao-templates.md), [월간 보고서](ops/monthly-report-template.md) | 파일럿부터 매일 |
-| `tools/` | [`savings-calculator.xlsx`](tools/savings-calculator.xlsx): 고통 집계, 견적 비교, 절감액·수수료 계산 | Week 2부터 |
+| `tools/` | [`savings-calculator.xlsx`](tools/savings-calculator.xlsx): 고통 집계, 견적 비교, 절감액·수수료 계산, 24개월 사업계획과 VC 규모 역산 | Week 2부터 |
 
 ## 노션으로 옮기기
 
