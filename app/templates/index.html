@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "_round_card.html" as rc %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">{{ s.service_area }} 꼬마빌딩 · 상가주택 · 원룸 건물주님께</p>
+  <h1>건물 운영비,<br>이웃 건물과 함께 사면 내려갑니다</h1>
+  <p class="lead">청소·승강기·소방 용역을 같은 동네 건물과 묶어 단가를 협상합니다. 업체 관리와 법정 점검 일정은 저희가 대신 챙깁니다.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="/diagnosis">무료 운영비 진단 신청</a>
+    <a class="btn btn-ghost" href="/rounds">진행 중인 공동구매 보기</a>
+  </div>
+</section>
+
+<section aria-labelledby="open-rounds">
+  <h2 id="open-rounds">지금 모집 중인 공동구매</h2>
+  {% if rounds %}
+  <div class="cards">
+    {% for r in rounds %}{{ rc.card(r) }}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <p><strong>{{ s.service_area }}에서 첫 공동구매를 준비하고 있습니다.</strong></p>
+    <p>무료 진단을 신청하시면 지금 내시는 운영비를 정리해 드리고, 공동구매가 열릴 때 가장 먼저 알려 드립니다.</p>
+    <a class="btn btn-primary" href="/diagnosis">무료 진단 신청</a>
+  </div>
+  {% endif %}
+</section>
+
+<section aria-labelledby="how">
+  <h2 id="how">이렇게 진행돼요</h2>
+  <ol class="steps">
+    <li><strong>무료 진단 신청</strong><span>건물 유형과 지금 내는 운영비를 알려 주세요.</span></li>
+    <li><strong>운영비 진단 리포트</strong><span>항목별 비용, 법정 점검 현황, 줄일 수 있는 곳을 1장으로 정리해 드립니다.</span></li>
+    <li><strong>공동구매 참여</strong><span>같은 동네 건물이 모일수록 1채당 단가가 내려갑니다.</span></li>
+    <li><strong>계약은 건물주님 명의로</strong><span>업체와 직접 계약하시고, 저희는 업체 선정과 관리를 맡습니다.</span></li>
+    <li><strong>매달 보고</strong><span>점검 결과, 민원 처리, 이번 달 운영비를 카톡으로 보내 드립니다.</span></li>
+  </ol>
+</section>
+
+<section aria-labelledby="fee" class="panel">
+  <h2 id="fee">비용</h2>
+  <p class="big">{{ s.fee_text }}</p>
+  <p class="hint">진단 리포트는 무료입니다. 보수 조건은 계약 전에 서면으로 안내해 드립니다.</p>
+</section>
+
+<section aria-labelledby="not-do">
+  <h2 id="not-do">저희가 하지 않는 일</h2>
+  <ul class="plain">
+    <li>보험 상품 추천이나 가입 권유. 보험은 지금 증권 정리와 만기 알림까지만 해 드립니다.</li>
+    <li>세무·법률 상담. 필요하시면 전문가께 직접 문의하시도록 안내해 드립니다.</li>
+    <li>임대차 중개. 세입자 모집은 공인중개사 영역입니다.</li>
+    <li>업체로부터 건물주님 모르게 받는 돈. 받는 대가가 있다면 공동구매 페이지에 공개합니다.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="faq">
+  <h2 id="faq">자주 묻는 질문</h2>
+  <details>
+    <summary>공동구매가 목표 건물 수를 못 채우면 어떻게 되나요?</summary>
+    <p>모인 건물 수에 맞는 단가 구간이 적용됩니다. 그 단가가 지금보다 비싸면 참여하지 않으셔도 되고, 비용은 들지 않습니다.</p>
+  </details>
+  <details>
+    <summary>업체 계약은 누구 이름으로 하나요?</summary>
+    <p>건물주님 명의로 업체와 직접 계약하십니다. 저희는 계약 당사자가 아니고, 업체를 고르고 관리하는 역할을 합니다.</p>
+  </details>
+  <details>
+    <summary>어느 지역에서 하나요?</summary>
+    <p>지금은 {{ s.service_area }}에 집중하고 있습니다. 다른 지역은 진단 신청을 남겨 주시면 건물이 모일 때 연락드립니다.</p>
+  </details>
+  <details>
+    <summary>제 정보는 업체에 넘어가나요?</summary>
+    <p>동의하신 경우에만 견적에 필요한 건물 정보(위치 구·동, 유형, 면적, 층수)를 업체에 전달합니다. 이름과 전화번호는 전달하지 않습니다.</p>
+  </details>
+</section>
+{% endblock %}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ s.brand_name }} · {{ s.service_area }} 건물 운영비 공동구매{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ s.service_area }} 꼬마빌딩·상가주택·원룸 건물의 청소·승강기·소방 운영비를 이웃 건물과 묶어 낮추고, 업체 관리와 점검 일정은 대신 챙깁니다.{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ self.title() }}">
+  <meta property="og:description" content="{{ self.description() }}">
+  <link rel="stylesheet" href="/static/style.css">
+  {% block head_extra %}{% endblock %}
+</head>
+<body{% block body_class %}{% endblock %}>
+  <a class="skip" href="#main">본문으로 건너뛰기</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/">{{ s.brand_name }}</a>
+      <nav aria-label="주요 메뉴">
+        <a href="/rounds">공동구매</a>
+        <a href="/diagnosis">무료 진단</a>
+        {% if s.kakao_url %}<a href="{{ s.kakao_url }}" rel="noopener">카톡 문의</a>{% endif %}
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <p class="footer-note">보험 가입 권유, 세무·법률 상담, 부동산 중개는 하지 않습니다. 업체 계약은 건물주님 명의로 직접 맺습니다.</p>
+      <p>{{ s.brand_name }} · {{ s.business_info }}</p>
+      {% if s.contact_phone or s.contact_email %}
+      <p>문의 {% if s.contact_phone %}<a href="tel:{{ s.contact_phone }}">{{ s.contact_phone }}</a>{% endif %}{% if s.contact_phone and s.contact_email %} · {% endif %}{% if s.contact_email %}<a href="mailto:{{ s.contact_email }}">{{ s.contact_email }}</a>{% endif %}</p>
+      {% endif %}
+      <p><a href="/privacy"><strong>개인정보처리방침</strong></a> · <a href="/terms">이용 안내</a></p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{% macro card(r) -%}
+<article class="card">
+  <p class="card-meta"><span class="badge badge-{{ r.row.status }}">{{ r.status_label }}</span> {{ r.row.category }} · {{ r.row.district }}</p>
+  <h3><a href="/rounds/{{ r.row.slug }}">{{ r.row.title }}</a></h3>
+  <p>{{ r.row.summary }}</p>
+  <p class="count"><strong>{{ r.count }}채</strong> 참여 / 목표 {{ r.row.target_buildings }}채</p>
+  <progress value="{{ r.count }}" max="{{ r.row.target_buildings }}" aria-label="참여 건물 {{ r.count }}채, 목표 {{ r.row.target_buildings }}채"></progress>
+  {% if r.tier.current %}
+  <p class="price">지금 1채당 월 <strong>{{ r.tier.current.price | won }}</strong>{% if r.tier.saving_vs_single %} <span class="save">혼자 계약보다 {{ r.tier.saving_vs_single | won }} ↓</span>{% endif %}</p>
+  {% else %}
+  <p class="price">혼자 계약하면 1채당 월 <strong>{{ r.tiers[0].price | won }}</strong></p>
+  {% endif %}
+  {% if r.tier.next and r.joinable %}<p class="next">{{ r.tier.remaining }}채 더 모이면 1채당 월 {{ r.tier.next.price | won }}</p>{% endif %}
+  <p class="deadline">{% if r.joinable %}마감 {{ r.deadline.strftime('%m월 %d일') }}{% if r.days_left >= 0 %} · {{ r.days_left }}일 남음{% endif %}{% else %}신청 마감{% endif %}</p>
+  <a class="btn btn-small" href="/rounds/{{ r.row.slug }}">자세히 보기</a>
+</article>
+{%- endmacro %}

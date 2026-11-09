@@ -1,0 +1,34 @@
+{% extends "admin/_layout.html" %}
+{% block admin %}
+<h1>요약</h1>
+<section>
+  <h2>무료 진단 신청</h2>
+  <div class="table-scroll"><table class="data">
+    <thead><tr>{% for k in lead_counts %}<th scope="col">{{ k }}</th>{% endfor %}</tr></thead>
+    <tbody><tr>{% for k, v in lead_counts.items() %}<td>{{ v }}</td>{% endfor %}</tr></tbody>
+  </table></div>
+  <p><a href="/admin/leads">진단 신청 전체 보기</a></p>
+</section>
+<section>
+  <h2>공동구매 라운드</h2>
+  {% if rounds %}
+  <div class="table-scroll"><table class="data">
+    <thead><tr><th scope="col">제목</th><th scope="col">상태</th><th scope="col">모인 건물</th><th scope="col">지금 단가</th><th scope="col">마감</th><th scope="col">공개 주소</th></tr></thead>
+    <tbody>
+    {% for r in rounds %}
+      <tr>
+        <td><a href="/admin/rounds/{{ r.row.id }}">{{ r.row.title }}</a></td>
+        <td>{{ r.status_label }}</td>
+        <td>{{ r.count }} / {{ r.row.target_buildings }}</td>
+        <td>{% if r.tier.current %}{{ r.tier.current.price | won }}{% else %}-{% endif %}</td>
+        <td>{{ r.row.deadline }}</td>
+        <td>{% if r.row.status in ('open', 'closed', 'succeeded') %}<a href="/rounds/{{ r.row.slug }}">/rounds/{{ r.row.slug }}</a>{% else %}비공개{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p>아직 만든 라운드가 없습니다. 업체 견적(1채 / 3채 / 5채 / 10채 단가)을 받은 뒤 <a href="/admin/rounds/new">새 공동구매</a>를 만드세요.</p>
+  {% endif %}
+</section>
+{% endblock %}

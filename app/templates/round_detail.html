@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ r.row.title }} · {{ s.brand_name }}{% endblock %}
+{% block description %}{{ r.row.summary }}{% endblock %}
+{% block content %}
+<p class="crumb"><a href="/rounds">공동구매</a> › {{ r.row.district }}</p>
+<p class="card-meta"><span class="badge badge-{{ r.row.status }}">{{ r.status_label }}</span> {{ r.row.category }} · {{ r.row.district }}</p>
+<h1>{{ r.row.title }}</h1>
+<p class="lead">{{ r.row.summary }}</p>
+
+<section class="panel" aria-labelledby="progress-h">
+  <h2 id="progress-h">모인 건물</h2>
+  <p class="count big"><strong>{{ r.count }}채</strong> / 목표 {{ r.row.target_buildings }}채</p>
+  <progress value="{{ r.count }}" max="{{ r.row.target_buildings }}" aria-label="참여 건물 {{ r.count }}채, 목표 {{ r.row.target_buildings }}채"></progress>
+  {% if r.tier.next and r.joinable %}<p class="next"><strong>{{ r.tier.remaining }}채</strong> 더 모이면 1채당 월 <strong>{{ r.tier.next.price | won }}</strong>으로 내려갑니다.</p>{% endif %}
+  <p class="deadline">{% if r.joinable %}신청 마감 {{ r.deadline.strftime('%Y년 %m월 %d일') }}{% if r.days_left >= 0 %} ({{ r.days_left }}일 남음){% endif %}{% else %}신청이 마감됐습니다.{% endif %}</p>
+</section>
+
+<section aria-labelledby="tiers-h">
+  <h2 id="tiers-h">모인 건물 수에 따른 1채당 월 단가</h2>
+  <table class="tiers">
+    <thead><tr><th scope="col">모인 건물</th><th scope="col">1채당 월 단가</th><th scope="col">혼자 계약할 때보다</th></tr></thead>
+    <tbody>
+    {% for t in r.tiers %}
+      <tr{% if r.tier.current and r.tier.current.min_buildings == t.min_buildings %} class="current"{% endif %}>
+        <td>{{ t.min_buildings }}채 이상{% if r.tier.current and r.tier.current.min_buildings == t.min_buildings %} <span class="badge badge-open">지금</span>{% endif %}</td>
+        <td>{{ t.price | won }}</td>
+        <td>{% if loop.first %}기준{% else %}{{ (r.tiers[0].price - t.price) | won }} ↓{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">{{ r.row.price_note }}</p>
+</section>
+
+{% if r.row.details %}
+<section aria-labelledby="details-h">
+  <h2 id="details-h">자세한 내용</h2>
+  <p class="prewrap">{{ r.row.details }}</p>
+</section>
+{% endif %}
+
+<section class="panel disclosure" aria-labelledby="disclosure-h">
+  <h2 id="disclosure-h">보수와 업체 대가 공개</h2>
+  <p class="prewrap">{{ r.row.fee_disclosure }}</p>
+</section>
+
+{% if r.joinable %}
+<section aria-labelledby="join-h">
+  <h2 id="join-h">참여 신청</h2>
+  <p>신청은 확정이 아닙니다. 연락드려 건물을 확인한 뒤, 단가가 맞을 때만 계약하시면 됩니다.</p>
+  {% if errors %}<p class="error-summary" role="alert">입력한 내용을 확인해 주세요.</p>{% endif %}
+  <form method="post" action="/rounds/{{ r.row.slug }}/join" class="form" novalidate>
+    {{ m.hidden_fields(csrf_field, csrf_token, honeypot) }}
+    {{ m.contact_and_building(values, errors, building_types) }}
+    <fieldset>
+      <legend>지금 비용</legend>
+      {{ m.input("current_cost", "이 항목에 지금 내는 월 비용", values, errors, inputmode="numeric", placeholder="예: 45만", hint="모르시면 비워 두세요.") }}
+      <div class="field">
+        <label for="message">남길 말</label>
+        <textarea id="message" name="message" rows="3" maxlength="1000">{{ m.val(values, 'message') }}</textarea>
+      </div>
+    </fieldset>
+    {{ m.collect_consent(errors, "공동구매 참여 확인, 견적 안내 연락") }}
+    <div class="consent">
+      <p class="consent-title">업체 견적을 위한 건물 정보 제공 동의 <span class="opt">선택</span></p>
+      <table class="consent-table">
+        <tr><th scope="row">제공받는 곳</th><td><strong>이 공동구매의 견적 업체</strong></td></tr>
+        <tr><th scope="row">제공 항목</th><td><strong>건물 위치(구·동), 유형, 연면적, 층수</strong> (이름·전화번호는 주지 않습니다)</td></tr>
+        <tr><th scope="row">목적</th><td><strong>건물별 견적 산정</strong></td></tr>
+        <tr><th scope="row">업체 보유 기간</th><td><strong>견적 산정이 끝날 때까지</strong></td></tr>
+      </table>
+      <p class="hint">동의하지 않아도 참여할 수 있습니다. 그 경우 건물 정보를 업체에 넘기지 않고, 현장 확인 일정을 따로 여쭙습니다.</p>
+      <label class="check"><input type="checkbox" name="consent_vendor_share"{% if values.get('consent_vendor_share') %} checked{% endif %}> 건물 정보 제공에 동의합니다</label>
+    </div>
+    {{ m.marketing_consent(values) }}
+    <button class="btn btn-primary btn-block" type="submit">참여 신청하기</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
