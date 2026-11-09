@@ -1,0 +1,20 @@
+﻿CSV,원자료,URL,자료 기준일,확인수준
+official_molit_2025_seoul_buildings.csv,"국토교통부 2025년 건축물현황(최종).xlsx (e-나라지표 1226 첨부, 2026-03-24 등록)",https://www.index.go.kr/unity/potal/FileDown.do?seq=16852&id=1226&div=1,2025.12월말 기준,원문 확인
+official_enara1226_sido_by_use_2025.csv,e-나라지표 1226 건축물 현황 > 지역별/용도별(122610),https://www.index.go.kr/unity/potal/eNara/sub/showStblGams3.do?stts_cd=122610&idx_cd=1226&freq=Y&period=2025:2025,2025,원문 확인
+official_enara1226_sido_by_area_2025.csv,e-나라지표 1226 > 지역별/면적별(122605),https://www.index.go.kr/unity/potal/eNara/sub/showStblGams3.do?stts_cd=122605&idx_cd=1226&freq=Y&period=2025:2025,2025,원문 확인
+official_enara1226_sido_by_floors_2025.csv,e-나라지표 1226 > 지역별/층수별(122606),https://www.index.go.kr/unity/potal/eNara/sub/showStblGams3.do?stts_cd=122606&idx_cd=1226&freq=Y&period=2025:2025,2025,원문 확인
+seoul_buildings_by_gu_mainuse_register.csv,"서울시 건축물대장 표제부 OA-22424 전수(583,650건) 집계",https://data.seoul.go.kr/dataList/OA-22424/S/1/datasetView.do,"열린데이터광장 갱신일 2026-11-09; 수집 2026-11-09 16:09~16:31 UTC",원문 확인(전수 마이크로데이터)
+target_seoul_by_gu.csv,"표제부 OA-22424 + 층별개요 OA-22425(3,034,424건) + 한국승강기안전공단 승강기 설치현황(data.go.kr 15112638) + 오수정화시설 OA-22428(487,593건)",https://data.seoul.go.kr/dataList/OA-22425/S/1/datasetView.do ; https://www.data.go.kr/data/15112638/fileData.do ; https://data.seoul.go.kr/dataList/OA-22428/S/1/datasetView.do,대장: 2026-11-09 갱신분 / 승강기: 2026-06-30,"원문 확인(전수 마이크로데이터, 자체 집계)"
+target_seoul_crosstab_use_floors_area.csv,위와 동일(용도×층수×연면적 교차),동일,동일,원문 확인(자체 집계)
+seoul_sensitivity_use_floorband_areaband.csv,위와 동일(층수·면적 구간 민감도),동일,동일,원문 확인(자체 집계)
+target_classification_method_by_gu.csv,분류 근거 감사표,동일,동일,원문 확인(자체 집계)
+target_mapo_by_beopjeongdong.csv,마포구 법정동별 타깃,동일,동일,원문 확인(자체 집계)
+target_mapo_by_haengjeongdong_cluster.csv,마포구 행정동 묶음/범위(법정동→행정동 공식 일람표 적용),동일 + https://www.mapo.go.kr/site/main/content/mapo04010104,동일,원문 확인(자체 집계)
+target_mapo_building_list.csv,"마포구 타깃 건물 6,382동 목록(주소·용도·층수·연면적·승강기·정화조)",동일,동일,원문 확인(자체 집계)
+mapo_haengjeongdong_16_official.csv,마포구 16개 행정동·26개 법정동 일람표,https://www.mapo.go.kr/site/main/content/mapo04010104,최종수정일 2026-03-09,원문 확인
+elev_seoul_by_gu_KoELSA_20251231.csv,"한국승강기안전공단 국내 승강기 보유 현황_20251231 (CSV 506,482행)",https://www.data.go.kr/data/15017366/fileData.do,2025-12-31,원문 확인
+elev_seoul_by_use_type_KoELSA_20251231.csv,동일(서울·마포 종류별/건물용도별),https://www.data.go.kr/data/15017366/fileData.do,2025-12-31,원문 확인
+elev_seoul_by_gu_KoELSA_install_20260630.csv,한국승강기안전공단 승강기 설치 현황_20260630 (2015년 이전/2016년 이후 CSV),https://www.data.go.kr/data/15112638/fileData.do,2026-06-30,원문 확인
+elev_mapo_by_beopjeongdong_KoELSA_install_20260630.csv,동일(마포구 법정동별),https://www.data.go.kr/data/15112638/fileData.do,2026-06-30,원문 확인
+elev_seoul_mapo_by_use_running_KoELSA_install_20260630.csv,동일(건물용도별 운행중),https://www.data.go.kr/data/15112638/fileData.do,2026-06-30,원문 확인
+septic_seoul_by_gu_register.csv,서울시 건축물대장 오수정화시설 OA-22428 전수,https://data.seoul.go.kr/dataList/OA-22428/S/1/datasetView.do,갱신일 2026-11-09,원문 확인(자체 집계)
