@@ -22,7 +22,8 @@
 5. [`docs/strategy.md`](docs/strategy.md)와 [`docs/investment.md`](docs/investment.md): 포지셔닝, 쐐기, 밀도 전략, 중단 기준, 그리고 VC 투자를 받을 수 있는지에 대한 판단.
 6. [`docs/platform.md`](docs/platform.md): 웹 창구를 어디까지 만들었고 언제 무엇을 더 만들지, 출시 체크리스트.
 7. [`docs/deploy-guide.md`](docs/deploy-guide.md): **도메인 · GitHub · Supabase · Vercel로 사이트를 공개하는 방법**(단계별).
-8. [`docs/benchmark.md`](docs/benchmark.md): **경쟁사 17곳 벤치마킹, 차별화, 단계별 로드맵, 300억까지의 숫자**. 액션 아이템 200개는 [`ops/action-items.csv`](ops/action-items.csv).
+8. [`docs/execution-plan.md`](docs/execution-plan.md): **36개월 실행계획 요약**(조사로 바뀐 결론, 재무 모델 결과, 게이트). 재무 모델은 [`tools/financial-model-36m.xlsx`](tools/financial-model-36m.xlsx).
+9. [`docs/benchmark.md`](docs/benchmark.md): **경쟁사 17곳 벤치마킹, 차별화, 단계별 로드맵, 300억까지의 숫자**. 액션 아이템 200개는 [`ops/action-items.csv`](ops/action-items.csv).
 
 ## 웹 창구 실행하기
 
@@ -54,13 +55,13 @@ ADMIN_PASSWORD=원하는비밀번호 uvicorn app.asgi:app --reload --port 8000
 | 폴더 | 내용 | 쓰는 시점 |
 |---|---|---|
 | `app/`, `tests/` | 웹 창구(FastAPI + Supabase Postgres 또는 SQLite)와 테스트 | 지금부터 |
-| `docs/` | [전략](docs/strategy.md), [플랫폼 전략](docs/platform.md), [배포 가이드](docs/deploy-guide.md), [투자 가능성·자금 조달](docs/investment.md), [벤치마킹과 청사진](docs/benchmark.md), [30일 플랜](docs/30-day-plan.md), [법률 체크리스트](docs/legal-checklist.md) | 처음, 그리고 단계 바꿀 때 |
+| `docs/` | [전략](docs/strategy.md), [플랫폼 전략](docs/platform.md), [배포 가이드](docs/deploy-guide.md), [투자 가능성·자금 조달](docs/investment.md), [벤치마킹과 청사진](docs/benchmark.md), [36개월 실행계획](docs/execution-plan.md), [30일 플랜](docs/30-day-plan.md), [법률 체크리스트](docs/legal-checklist.md) | 처음, 그리고 단계 바꿀 때 |
 | `interview/` | [인터뷰 가이드](interview/guide.md), [기록지](interview/note-template.md), [고통 TOP 3 뽑는 법](interview/synthesis.md), [후보 리스트 CSV](interview/candidates.csv) | Week 1–2 |
 | `service/` | [서비스 범위](service/scope.md), [가격 모델](service/pricing.md), [1장 계약서 초안](service/contract-draft.md) | Week 3–4 |
 | `sourcing/` | [업체 견적 요청서](sourcing/rfq-template.md), [업체 DB CSV](sourcing/vendors.csv) | Week 3–4 |
 | `pilot/` | [건물 건강진단 리포트](pilot/building-health-report-template.md), [케이스 스터디](pilot/case-study-template.md) | Month 2–3 |
 | `ops/` | [건물 대장 CSV](ops/buildings.csv), [민원·이슈 로그 CSV](ops/issue-log.csv), [액션 아이템 200개 CSV](ops/action-items.csv), [법정 점검 캘린더](ops/compliance-calendar.md), [카톡 문구](ops/kakao-templates.md), [월간 보고서](ops/monthly-report-template.md) | 파일럿부터 매일 |
-| `tools/` | [`savings-calculator.xlsx`](tools/savings-calculator.xlsx): 고통 집계, 견적 비교, 절감액·수수료 계산, 24개월 사업계획과 VC 규모 역산 | Week 2부터 |
+| `tools/` | [`savings-calculator.xlsx`](tools/savings-calculator.xlsx): 고통 집계, 견적 비교, 절감액·수수료 계산, 24개월 사업계획과 VC 규모 역산. [`financial-model-36m.xlsx`](tools/financial-model-36m.xlsx): 36개월 월별 재무 모델(비관·기본·낙관) | Week 2부터 |
 
 ## 노션으로 옮기기
 
