@@ -1,4 +1,4 @@
-"""웹 앱: 공개 페이지(창구·공동구매)와 관리자 화면."""
+"""웹 앱: 공개 페이지(창구·공동구매·희망 등록·업체 등록)와 관리자 화면."""
 
 from __future__ import annotations
 
@@ -16,7 +16,14 @@ from fastapi.templating import Jinja2Templates
 
 from . import forms
 from .config import Settings, load_settings
-from .db import LEAD_STATUSES, PARTICIPATION_STATUSES, Repo, today_kst
+from .db import (
+    DEMAND_STATUSES,
+    LEAD_STATUSES,
+    PARTICIPATION_STATUSES,
+    PARTNER_STATUSES,
+    Repo,
+    today_kst,
+)
 from .rounds import (
     ALLOWED_CATEGORIES,
     PUBLIC_STATUSES,
@@ -39,6 +46,7 @@ from .security import (
 )
 
 BASE_DIR = Path(__file__).resolve().parent
+BOARD_LIMIT = 8  # 첫 화면에 보여 줄 '모이고 있는 공동구매' 수
 
 
 def won(value: int | None) -> str:
@@ -47,7 +55,7 @@ def won(value: int | None) -> str:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
-    repo = Repo(settings.database_path)
+    repo = Repo(settings.database_path, settings.database_url)
     app = FastAPI(title=settings.brand_name, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.settings = settings
     app.state.repo = repo
@@ -72,6 +80,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         for name, value in SECURITY_HEADERS.items():
             response.headers.setdefault(name, value)
+        if request.url.path.startswith("/admin"):
+            response.headers["X-Robots-Tag"] = "noindex, nofollow"
+            response.headers["Cache-Control"] = "no-store"
         return response
 
     def render(request: Request, name: str, context: dict[str, Any] | None = None,
@@ -82,12 +93,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "csrf_token": request.state.csrf_token,
             "honeypot": forms.HONEYPOT_FIELD,
             "today": today_kst(),
+            "categories": ALLOWED_CATEGORIES,
+            "building_types": forms.BUILDING_TYPES,
         }
         ctx.update(context or {})
         return templates.TemplateResponse(request, name, ctx, status_code=status_code)
 
-    def round_view(row) -> dict[str, Any]:
-        counts = repo.participant_counts()
+    def round_view(row, counts: dict[int, int] | None = None) -> dict[str, Any]:
+        counts = repo.participant_counts() if counts is None else counts
         count = counts.get(row["id"], 0)
         tiers = tiers_from_json(row["tiers_json"])
         deadline = date.fromisoformat(row["deadline"])
@@ -103,6 +116,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "status_label": ROUND_STATUSES.get(row["status"], row["status"]),
         }
 
+    def round_views(statuses: tuple[str, ...] | None) -> list[dict[str, Any]]:
+        counts = repo.participant_counts()
+        return [round_view(r, counts) for r in repo.list_rounds(statuses)]
+
+    def board(limit: int | None = None) -> list[dict[str, Any]]:
+        items = repo.demand_board()
+        for item in items:
+            item["remaining"] = max(0, settings.demand_threshold - item["count"])
+            item["reached"] = item["count"] >= settings.demand_threshold
+        return items[:limit] if limit else items
+
     def public_round_or_404(slug: str):
         row = repo.get_round_by_slug(slug)
         if row is None or row["status"] not in PUBLIC_STATUSES:
@@ -112,20 +136,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # ------------------------------------------------------------------ 공개 페이지
     @app.get("/", response_class=HTMLResponse)
     def home(request: Request):
-        rounds = [round_view(r) for r in repo.list_rounds(("open",))]
-        return render(request, "index.html", {"rounds": rounds})
+        return render(request, "index.html", {
+            "rounds": round_views(("open",)), "board": board(BOARD_LIMIT),
+        })
 
     @app.get("/rounds", response_class=HTMLResponse)
     def rounds_list(request: Request):
-        rounds = [round_view(r) for r in repo.list_rounds(PUBLIC_STATUSES)]
-        return render(request, "rounds.html", {"rounds": rounds})
+        return render(request, "rounds.html", {
+            "rounds": round_views(PUBLIC_STATUSES), "board": board(),
+        })
 
     @app.get("/rounds/{slug}", response_class=HTMLResponse)
     def round_detail(request: Request, slug: str):
         view = round_view(public_round_or_404(slug))
-        return render(request, "round_detail.html", {
-            "r": view, "values": {}, "errors": {}, "building_types": forms.BUILDING_TYPES,
-        })
+        return render(request, "round_detail.html", {"r": view, "values": {}, "errors": {}})
 
     @app.post("/rounds/{slug}/join", response_class=HTMLResponse)
     async def round_join(request: Request, slug: str):
@@ -139,20 +163,56 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return RedirectResponse("/thanks?kind=round", status_code=303)
         data, errors = forms.validate_join(form)
         if errors:
-            return render(request, "round_detail.html", {
-                "r": view, "values": data, "errors": errors,
-                "building_types": forms.BUILDING_TYPES,
-            }, status_code=400)
+            return render(request, "round_detail.html",
+                          {"r": view, "values": data, "errors": errors}, status_code=400)
         # 같은 번호로 여러 번 신청해 참여 건물 수가 부풀려지지 않게 합니다.
         if not repo.has_active_participation(row["id"], data["phone"]):
             repo.add_participation(row["id"], data)
         return RedirectResponse(f"/thanks?kind=round&slug={row['slug']}", status_code=303)
 
+    @app.get("/demand", response_class=HTMLResponse)
+    def demand_form(request: Request, category: str = "", dong: str = ""):
+        values = {"categories": category if category in ALLOWED_CATEGORIES else "",
+                  "dong": dong if dong in settings.service_dongs else ""}
+        return render(request, "demand.html", {"values": values, "errors": {}, "board": board()})
+
+    @app.post("/demand", response_class=HTMLResponse)
+    async def demand_submit(request: Request):
+        form = await request.form()
+        check_csrf(request, form)
+        if forms.is_spam(form):
+            return RedirectResponse("/thanks?kind=demand", status_code=303)
+        data, errors = forms.validate_demand(form, settings.service_area, settings.service_dongs)
+        if errors:
+            return render(request, "demand.html",
+                          {"values": data, "errors": errors, "board": board()}, status_code=400)
+        repo.add_or_merge_demand(data)
+        return RedirectResponse("/thanks?kind=demand", status_code=303)
+
+    @app.get("/partners", response_class=HTMLResponse)
+    def partner_form(request: Request):
+        return render(request, "partners.html", {
+            "values": {}, "errors": {}, "bulk_choices": forms.BULK_DISCOUNT_CHOICES,
+        })
+
+    @app.post("/partners", response_class=HTMLResponse)
+    async def partner_submit(request: Request):
+        form = await request.form()
+        check_csrf(request, form)
+        if forms.is_spam(form):
+            return RedirectResponse("/thanks?kind=partner", status_code=303)
+        data, errors = forms.validate_partner(form)
+        if errors:
+            return render(request, "partners.html", {
+                "values": data, "errors": errors, "bulk_choices": forms.BULK_DISCOUNT_CHOICES,
+            }, status_code=400)
+        repo.add_partner(data)
+        return RedirectResponse("/thanks?kind=partner", status_code=303)
+
     @app.get("/diagnosis", response_class=HTMLResponse)
     def diagnosis_form(request: Request):
         return render(request, "diagnosis.html", {
-            "values": {}, "errors": {}, "building_types": forms.BUILDING_TYPES,
-            "concerns": forms.CONCERNS, "selected": [],
+            "values": {}, "errors": {}, "concerns": forms.CONCERNS, "selected": [],
         })
 
     @app.post("/diagnosis", response_class=HTMLResponse)
@@ -164,8 +224,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         data, errors = forms.validate_diagnosis(form)
         if errors:
             return render(request, "diagnosis.html", {
-                "values": data, "errors": errors, "building_types": forms.BUILDING_TYPES,
-                "concerns": forms.CONCERNS, "selected": form.getlist("concerns"),
+                "values": data, "errors": errors, "concerns": forms.CONCERNS,
+                "selected": form.getlist("concerns"),
             }, status_code=400)
         repo.add_lead(data)
         return RedirectResponse("/thanks?kind=diagnosis", status_code=303)
@@ -197,11 +257,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/admin", response_class=HTMLResponse, dependencies=admin)
     def admin_home(request: Request):
-        rounds = [round_view(r) for r in repo.list_rounds()]
         return render(request, "admin/home.html", {
-            "lead_counts": repo.lead_status_counts(), "rounds": rounds,
-            "round_statuses": ROUND_STATUSES,
+            "lead_counts": repo.lead_status_counts(), "rounds": round_views(None),
+            "board": board(), "partner_count": len(repo.list_partners()),
         })
+
+    async def _status_update(request: Request, table: str, row_id: int,
+                             statuses: tuple[str, ...]) -> None:
+        form = await request.form()
+        check_csrf(request, form)
+        status, memo, errors = forms.validate_status_update(form, statuses)
+        if errors or not repo.update_status(table, row_id, status, memo):
+            raise HTTPException(400, "저장하지 못했습니다. 입력값을 확인해 주세요.")
 
     @app.get("/admin/leads", response_class=HTMLResponse, dependencies=admin)
     def admin_leads(request: Request):
@@ -211,24 +278,50 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/admin/leads/{lead_id}", dependencies=admin)
     async def admin_lead_update(request: Request, lead_id: int):
-        form = await request.form()
-        check_csrf(request, form)
-        status, memo, errors = forms.validate_status_update(form, LEAD_STATUSES)
-        if errors or not repo.update_lead(lead_id, status, memo):
-            raise HTTPException(400, "저장하지 못했습니다. 입력값을 확인해 주세요.")
+        await _status_update(request, "leads", lead_id, LEAD_STATUSES)
         return RedirectResponse(f"/admin/leads#lead-{lead_id}", status_code=303)
 
+    @app.get("/admin/demand", response_class=HTMLResponse, dependencies=admin)
+    def admin_demand(request: Request):
+        return render(request, "admin/demand.html", {
+            "demands": repo.list_demands(), "statuses": DEMAND_STATUSES, "board": board(),
+        })
+
+    @app.post("/admin/demand/{demand_id}", dependencies=admin)
+    async def admin_demand_update(request: Request, demand_id: int):
+        await _status_update(request, "demands", demand_id, DEMAND_STATUSES)
+        return RedirectResponse(f"/admin/demand#d-{demand_id}", status_code=303)
+
+    @app.get("/admin/partners", response_class=HTMLResponse, dependencies=admin)
+    def admin_partners(request: Request):
+        return render(request, "admin/partners.html", {
+            "partners": repo.list_partners(), "statuses": PARTNER_STATUSES,
+        })
+
+    @app.post("/admin/partners/{partner_id}", dependencies=admin)
+    async def admin_partner_update(request: Request, partner_id: int):
+        await _status_update(request, "partners", partner_id, PARTNER_STATUSES)
+        return RedirectResponse(f"/admin/partners#pt-{partner_id}", status_code=303)
+
     def round_form_context(values: dict, errors: dict, round_row=None) -> dict[str, Any]:
-        return {
+        ctx: dict[str, Any] = {
             "values": values, "errors": errors, "round": round_row,
-            "categories": ALLOWED_CATEGORIES, "round_statuses": ROUND_STATUSES,
+            "round_statuses": ROUND_STATUSES,
         }
+        if round_row is not None:
+            ctx.update({
+                "view": round_view(round_row),
+                "participations": repo.list_participations(round_row["id"]),
+                "participation_statuses": PARTICIPATION_STATUSES,
+            })
+        return ctx
 
     @app.get("/admin/rounds/new", response_class=HTMLResponse, dependencies=admin)
-    def admin_round_new(request: Request):
+    def admin_round_new(request: Request, category: str = "", area: str = ""):
         values = {
             "status": "draft",
-            "district": settings.service_area,
+            "category": category if category in ALLOWED_CATEGORIES else "",
+            "district": area[:40] or settings.service_area,
             "tiers_text": "1=\n3=\n5=\n10=",
             "price_note": "업체 견적을 바탕으로 한 예상 단가입니다. 최종 금액은 건물별 현장 확인 뒤 정해지고, "
                           "계약은 건물주님과 업체가 직접 맺습니다.",
@@ -254,13 +347,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(404, "라운드가 없습니다.")
         values = dict(row)
         values["tiers_text"] = tiers_to_text(tiers_from_json(row["tiers_json"]))
-        ctx = round_form_context(values, {}, row)
-        ctx.update({
-            "view": round_view(row),
-            "participations": repo.list_participations(round_id),
-            "participation_statuses": PARTICIPATION_STATUSES,
-        })
-        return render(request, "admin/round_form.html", ctx)
+        return render(request, "admin/round_form.html", round_form_context(values, {}, row))
 
     @app.post("/admin/rounds/{round_id}", response_class=HTMLResponse, dependencies=admin)
     async def admin_round_update(request: Request, round_id: int):
@@ -271,28 +358,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(404, "라운드가 없습니다.")
         data, errors = forms.validate_round(form)
         if errors:
-            ctx = round_form_context(data, errors, row)
-            ctx.update({
-                "view": round_view(row),
-                "participations": repo.list_participations(round_id),
-                "participation_statuses": PARTICIPATION_STATUSES,
-            })
-            return render(request, "admin/round_form.html", ctx, status_code=400)
+            return render(request, "admin/round_form.html",
+                          round_form_context(data, errors, row), status_code=400)
         repo.update_round(round_id, data)
         return RedirectResponse(f"/admin/rounds/{round_id}", status_code=303)
 
     @app.post("/admin/participations/{participation_id}", dependencies=admin)
     async def admin_participation_update(request: Request, participation_id: int):
-        form = await request.form()
-        check_csrf(request, form)
         row = repo.get_participation(participation_id)
-        status, memo, errors = forms.validate_status_update(form, PARTICIPATION_STATUSES)
-        if row is None or errors:
+        if row is None:
             raise HTTPException(400, "저장하지 못했습니다. 입력값을 확인해 주세요.")
-        repo.update_participation(participation_id, status, memo)
+        await _status_update(request, "participations", participation_id, PARTICIPATION_STATUSES)
         return RedirectResponse(f"/admin/rounds/{row['round_id']}#p-{participation_id}",
                                 status_code=303)
 
+    # ---- CSV 내보내기 ------------------------------------------------------
     def csv_response(filename: str, header: list[str], rows: list[list[Any]]) -> Response:
         buf = io.StringIO()
         writer = csv.writer(buf)
@@ -306,6 +386,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
+    def yes_no(v: int | None) -> str:
+        return "예" if v else "아니오"
+
     @app.get("/admin/export/leads.csv", dependencies=admin)
     def export_leads():
         header = ["id", "신청일시", "이름", "연락처", "건물 위치", "건물 유형", "연면적", "층수",
@@ -314,9 +397,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             r["id"], r["created_at"], r["name"], r["phone"], r["district"], r["building_type"],
             r["floor_area"], r["floors"],
             {1: "있음", 0: "없음"}.get(r["has_elevator"], ""), r["monthly_cost"], r["concerns"],
-            r["message"], "예" if r["consent_marketing"] else "아니오", r["status"], r["admin_memo"],
+            r["message"], yes_no(r["consent_marketing"]), r["status"], r["admin_memo"],
         ] for r in repo.list_leads()]
         return csv_response("leads.csv", header, rows)
+
+    @app.get("/admin/export/demand.csv", dependencies=admin)
+    def export_demand():
+        header = ["id", "등록일시", "이름", "연락처", "동네", "희망 항목", "건물 유형", "연면적",
+                  "층수", "지금 월 비용(원)", "남긴 말", "소식 수신 동의", "상태", "메모"]
+        rows = [[
+            d["id"], d["created_at"], d["name"], d["phone"], d["area"], d["categories"],
+            d["building_type"], d["floor_area"], d["floors"], d["current_cost"], d["message"],
+            yes_no(d["consent_marketing"]), d["status"], d["admin_memo"],
+        ] for d in repo.list_demands()]
+        return csv_response("demand.csv", header, rows)
+
+    @app.get("/admin/export/partners.csv", dependencies=admin)
+    def export_partners():
+        header = ["id", "등록일시", "상호", "담당자", "연락처", "이메일", "용역 항목", "작업 지역",
+                  "등록·신고 정보", "묶음 할인", "남긴 말", "상태", "메모"]
+        rows = [[
+            p["id"], p["created_at"], p["company"], p["contact_name"], p["phone"], p["email"],
+            p["categories"], p["service_area"], p["license_info"], p["bulk_discount"],
+            p["message"], p["status"], p["admin_memo"],
+        ] for p in repo.list_partners()]
+        return csv_response("partners.csv", header, rows)
 
     @app.get("/admin/export/rounds/{round_id}/participants.csv", dependencies=admin)
     def export_participants(round_id: int):
@@ -326,9 +431,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                   "지금 월 비용(원)", "업체 정보 제공 동의", "소식 수신 동의", "남긴 말", "상태", "메모"]
         rows = [[
             p["id"], p["created_at"], p["name"], p["phone"], p["district"], p["building_type"],
-            p["floor_area"], p["floors"], p["current_cost"],
-            "예" if p["consent_vendor_share"] else "아니오",
-            "예" if p["consent_marketing"] else "아니오", p["message"], p["status"], p["admin_memo"],
+            p["floor_area"], p["floors"], p["current_cost"], yes_no(p["consent_vendor_share"]),
+            yes_no(p["consent_marketing"]), p["message"], p["status"], p["admin_memo"],
         ] for p in repo.list_participations(round_id)]
         return csv_response(f"round-{round_id}-participants.csv", header, rows)
 

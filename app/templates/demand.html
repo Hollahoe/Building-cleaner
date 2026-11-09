@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% import "_board.html" as bd %}
+{% block title %}우리 동네 공동구매 신청 · {{ s.brand_name }}{% endblock %}
+{% block description %}동네와 원하는 항목을 남겨 주세요. 같은 동네 건물이 {{ s.demand_threshold }}채 모이면 업체 견적을 받아 공동구매를 엽니다.{% endblock %}
+{% block content %}
+<h1>우리 동네 공동구매 신청</h1>
+<p class="lead">동네와 원하는 항목을 남겨 주세요. 같은 동네·같은 항목으로 <strong>{{ s.demand_threshold }}채</strong>가 모이면 업체 견적을 받아 공동구매를 엽니다. 신청만으로 계약이 되지 않고, 비용도 들지 않습니다.</p>
+
+{% if errors %}<p class="error-summary" role="alert">입력한 내용을 확인해 주세요.</p>{% endif %}
+<form method="post" action="/demand" class="form" novalidate>
+  {{ m.hidden_fields(csrf_field, csrf_token, honeypot) }}
+  <fieldset>
+    <legend>어디에, 무엇을</legend>
+    {% if s.service_dongs %}
+    <div class="field{% if errors.get('dong') %} has-error{% endif %}">
+      <label for="dong">동네 ({{ s.service_area }})</label>
+      <select id="dong" name="dong"{% if errors.get('dong') %} aria-invalid="true" aria-describedby="dong-error"{% endif %}>
+        <option value="">골라 주세요</option>
+        {% for d in s.service_dongs %}<option value="{{ d }}"{% if values.get('dong') == d %} selected{% endif %}>{{ d }}</option>{% endfor %}
+      </select>
+      {{ m.error(errors, "dong") }}
+    </div>
+    {{ m.input("area_other", "목록에 없으면 직접 적어 주세요 (구·동)", values, errors, placeholder="예: 서대문구 연희동") }}
+    {% else %}
+    {{ m.input("area_other", "건물이 있는 동네 (구·동)", values, errors, required=true, placeholder="예: " ~ s.service_area ~ " ○○동", hint="정확한 주소는 연락드릴 때 여쭙니다.") }}
+    {% endif %}
+    {{ m.category_checks(values, errors, categories, "공동구매하고 싶은 항목 (여러 개 고를 수 있어요)") }}
+  </fieldset>
+  <fieldset>
+    <legend>연락처</legend>
+    {{ m.input("name", "이름", values, errors, required=true, autocomplete="name") }}
+    {{ m.input("phone", "전화번호", values, errors, type="tel", required=true, autocomplete="tel", inputmode="tel", placeholder="010-1234-5678") }}
+  </fieldset>
+  <fieldset>
+    <legend>건물 정보</legend>
+    <div class="field{% if errors.get('building_type') %} has-error{% endif %}">
+      <label for="building_type">건물 유형 <span class="req">필수</span></label>
+      <select id="building_type" name="building_type" required{% if errors.get('building_type') %} aria-invalid="true" aria-describedby="building_type-error"{% endif %}>
+        <option value="">골라 주세요</option>
+        {% for t in building_types %}<option value="{{ t }}"{% if values.get('building_type') == t %} selected{% endif %}>{{ t }}</option>{% endfor %}
+      </select>
+      {{ m.error(errors, "building_type") }}
+    </div>
+    <div class="row-2">
+      {{ m.input("floor_area", "연면적", values, errors, placeholder="예: 60평") }}
+      {{ m.input("floors", "층수", values, errors, type="number", inputmode="numeric", placeholder="예: 4") }}
+    </div>
+    {{ m.input("current_cost", "고른 항목에 지금 내는 월 비용 (합계)", values, errors, inputmode="numeric", placeholder="예: 45만", hint="모르시면 비워 두세요.") }}
+    <div class="field">
+      <label for="message">남길 말</label>
+      <textarea id="message" name="message" rows="3" maxlength="1000">{{ m.val(values, 'message') }}</textarea>
+    </div>
+  </fieldset>
+  {{ m.collect_consent(errors, "공동구매 수요 집계, 견적이 나오면 안내 연락") }}
+  {{ m.marketing_consent(values) }}
+  <button class="btn btn-primary btn-block" type="submit">공동구매 신청하기</button>
+</form>
+
+<section aria-labelledby="board-h">
+  <h2 id="board-h">지금까지 모인 신청</h2>
+  {{ bd.demand_board(board, s, compact=true) }}
+</section>
+{% endblock %}

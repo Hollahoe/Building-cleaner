@@ -1,6 +1,28 @@
 {% extends "admin/_layout.html" %}
 {% block admin %}
 <h1>요약</h1>
+
+<section>
+  <h2>모이고 있는 공동구매 (기준 {{ s.demand_threshold }}채)</h2>
+  {% if board %}
+  <div class="table-scroll"><table class="data">
+    <thead><tr><th scope="col">동네</th><th scope="col">항목</th><th scope="col">신청 건물</th><th scope="col"></th></tr></thead>
+    <tbody>
+    {% for b in board %}
+      <tr>
+        <td>{{ b.area }}</td><td>{{ b.category }}</td>
+        <td>{{ b.count }}채{% if b.reached %} <span class="badge badge-open">기준 도달</span>{% endif %}</td>
+        <td><a href="/admin/rounds/new?category={{ b.category | urlencode }}&amp;area={{ b.area | urlencode }}">이 수요로 공동구매 열기</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p>아직 공동구매 신청이 없습니다. 인터뷰한 건물주님께 <a href="/demand">/demand</a> 링크를 보내 보세요.</p>
+  {% endif %}
+  <p><a href="/admin/demand">공동구매 신청자 보기</a> · <a href="/admin/partners">협력 업체 {{ partner_count }}곳 보기</a></p>
+</section>
+
 <section>
   <h2>무료 진단 신청</h2>
   <div class="table-scroll"><table class="data">
@@ -9,6 +31,7 @@
   </table></div>
   <p><a href="/admin/leads">진단 신청 전체 보기</a></p>
 </section>
+
 <section>
   <h2>공동구매 라운드</h2>
   {% if rounds %}
@@ -28,7 +51,12 @@
     </tbody>
   </table></div>
   {% else %}
-  <p>아직 만든 라운드가 없습니다. 업체 견적(1채 / 3채 / 5채 / 10채 단가)을 받은 뒤 <a href="/admin/rounds/new">새 공동구매</a>를 만드세요.</p>
+  <p>아직 연 공동구매가 없습니다. 신청이 기준만큼 모이면 업체 견적(1채 / 3채 / 5채 / 10채 단가)을 받은 뒤 <a href="/admin/rounds/new">새 공동구매</a>를 여세요.</p>
   {% endif %}
+</section>
+
+<section>
+  <h2>엑셀(CSV) 내려받기</h2>
+  <p><a href="/admin/export/demand.csv">공동구매 신청</a> · <a href="/admin/export/partners.csv">협력 업체</a> · <a href="/admin/export/leads.csv">진단 신청</a></p>
 </section>
 {% endblock %}

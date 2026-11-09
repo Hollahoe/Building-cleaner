@@ -1,4 +1,4 @@
-# Building-cleaner
+# 빌딩모아관리 (Building-cleaner)
 
 **소규모 건물주를 위한 공동구매형 건물관리. 1단계는 직접 뛰는 콘시어지형으로 운영합니다.**
 
@@ -6,7 +6,7 @@
 운영자가 건물주의 "총무" 역할을 맡아 업체 관리와 서류를 대신 정리합니다.
 
 > 이 레포에는 두 가지가 들어 있습니다.
-> 1. **웹 창구(`app/`)**: 건물주가 무료 진단을 신청하고 공동구매에 참여하는 사이트와 운영자용 관리자 화면. 결제·업체 입찰은 아직 없습니다([플랫폼 전략](docs/platform.md)).
+> 1. **웹 창구(`app/`)**: 건물주가 우리 동네 공동구매를 신청하고(동네·항목별 수요 게시판), 무료 진단을 신청하고, 열린 공동구매에 참여하는 사이트. 업체는 협력 업체로 등록합니다. 운영자용 관리자 화면 포함. 결제·업체 입찰은 아직 없습니다([플랫폼 전략](docs/platform.md)).
 > 2. **운영 키트**: 카톡·엑셀·노션으로 건물을 직접 관리할 때 쓰는 문서, 템플릿, 계산기.
 >
 > 직접 뛰면서 같은 일이 반복되는 게 확인되면, 그 업무만 다음 단계에서 자동화합니다.
@@ -21,6 +21,7 @@
 4. [`docs/legal-checklist.md`](docs/legal-checklist.md): **돈 받기 전에 꼭 읽기.** 보험·세무·법률 알선 수수료는 법적으로 막혀 있을 수 있습니다.
 5. [`docs/strategy.md`](docs/strategy.md)와 [`docs/investment.md`](docs/investment.md): 포지셔닝, 쐐기, 밀도 전략, 중단 기준, 그리고 VC 투자를 받을 수 있는지에 대한 판단.
 6. [`docs/platform.md`](docs/platform.md): 웹 창구를 어디까지 만들었고 언제 무엇을 더 만들지, 출시 체크리스트.
+7. [`docs/deploy-guide.md`](docs/deploy-guide.md): **도메인 · GitHub · Supabase · Vercel로 사이트를 공개하는 방법**(단계별).
 
 ## 웹 창구 실행하기
 
@@ -32,24 +33,27 @@ ADMIN_PASSWORD=원하는비밀번호 uvicorn app.asgi:app --reload --port 8000
 
 - 브라우저에서 `http://localhost:8000` (건물주 화면), `http://localhost:8000/admin` (관리자, 아이디 `admin`)
 - 화면 확인용 예시 공동구매 넣기: `python -m app.seed --demo` (제목에 [예시]가 붙고 금액은 가상입니다. 실제 운영 DB에는 쓰지 마세요)
-- 테스트: `python -m pytest`
+- 테스트: `python -m pytest` (Postgres로도 돌리려면 `TEST_DATABASE_URL=postgresql://… python -m pytest`)
 - 설정(브랜드 이름, 지역, 연락처, 카톡 링크, 비밀번호 등)은 환경 변수로 바꿉니다. 목록과 설명은 [`.env.example`](.env.example)에 있습니다.
-- 배포: `Dockerfile`로 이미지를 만들고, `/data`에 재시작해도 지워지지 않는 디스크를 연결하세요. 자세한 출시 순서는 [플랫폼 전략의 출시 체크리스트](docs/platform.md#출시-체크리스트)에 있습니다.
+- 저장소: `DATABASE_URL`(Supabase Postgres)이 있으면 Postgres, 없으면 SQLite 파일(`DATABASE_PATH`)을 씁니다. 표는 처음 켜질 때 자동으로 만들어집니다.
+- 배포: [배포 가이드](docs/deploy-guide.md) (Vercel + Supabase). Docker + 디스크로도 올릴 수 있습니다(`Dockerfile`).
 
 | 경로 | 화면 |
 |---|---|
-| `/` | 첫 화면: 소개, 모집 중인 공동구매, 진행 방식, 비용, 하지 않는 일, 자주 묻는 질문 |
+| `/` | 첫 화면: 소개, 모집 중인 공동구매, **모이고 있는 공동구매(동네·항목별 신청 수)**, 진행 방식, 비용, 하지 않는 일, 협력 업체 안내, 자주 묻는 질문 |
+| `/demand` | 우리 동네 공동구매 신청 (같은 번호·같은 동네는 합쳐져 숫자가 부풀지 않음) |
+| `/partners` | 협력 업체 등록 |
 | `/diagnosis` | 무료 운영비 진단 신청 |
 | `/rounds`, `/rounds/<주소>` | 공동구매 목록과 상세(모인 건물 수, 묶음 단가 구간, 참여 신청) |
 | `/privacy`, `/terms` | 개인정보처리방침, 이용 안내 |
-| `/admin` | 관리자: 신청자 상태·메모, 공동구매 만들기·수정, 참여자 관리, CSV 내보내기 |
+| `/admin` | 관리자: 수요 게시판(기준 도달 시 '이 수요로 공동구매 열기'), 공동구매 신청·협력 업체·진단 신청 관리, 공동구매 만들기·수정, 참여자 관리, CSV 내보내기 |
 
 ## 레포 구조
 
 | 폴더 | 내용 | 쓰는 시점 |
 |---|---|---|
-| `app/`, `tests/` | 웹 창구(FastAPI + SQLite)와 테스트 | 지금부터 |
-| `docs/` | [전략](docs/strategy.md), [플랫폼 전략](docs/platform.md), [투자 가능성·자금 조달](docs/investment.md), [30일 플랜](docs/30-day-plan.md), [법률 체크리스트](docs/legal-checklist.md) | 처음, 그리고 단계 바꿀 때 |
+| `app/`, `tests/` | 웹 창구(FastAPI + Supabase Postgres 또는 SQLite)와 테스트 | 지금부터 |
+| `docs/` | [전략](docs/strategy.md), [플랫폼 전략](docs/platform.md), [배포 가이드](docs/deploy-guide.md), [투자 가능성·자금 조달](docs/investment.md), [30일 플랜](docs/30-day-plan.md), [법률 체크리스트](docs/legal-checklist.md) | 처음, 그리고 단계 바꿀 때 |
 | `interview/` | [인터뷰 가이드](interview/guide.md), [기록지](interview/note-template.md), [고통 TOP 3 뽑는 법](interview/synthesis.md), [후보 리스트 CSV](interview/candidates.csv) | Week 1–2 |
 | `service/` | [서비스 범위](service/scope.md), [가격 모델](service/pricing.md), [1장 계약서 초안](service/contract-draft.md) | Week 3–4 |
 | `sourcing/` | [업체 견적 요청서](sourcing/rfq-template.md), [업체 DB CSV](sourcing/vendors.csv) | Week 3–4 |

@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import timedelta
 
@@ -6,14 +7,29 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.db import today_kst
-from app.main import create_app
+from app.web import create_app
 from app.rounds import parse_tiers, tiers_to_json
 
 ADMIN_PASSWORD = "test-admin-pw"
 
 
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "")
+ALL_TABLES = ("participations", "rounds", "leads", "demands", "partners")
+
+
+def _reset_postgres(url: str) -> None:
+    import psycopg
+
+    with psycopg.connect(url) as conn:
+        conn.execute(f"DROP TABLE IF EXISTS {', '.join(ALL_TABLES)} CASCADE")
+
+
 @pytest.fixture
 def settings(tmp_path):
+    """기본은 임시 SQLite. TEST_DATABASE_URL이 있으면 그 Postgres를 비우고 씁니다."""
+    if TEST_DATABASE_URL:
+        _reset_postgres(TEST_DATABASE_URL)
+        return Settings(admin_password=ADMIN_PASSWORD, database_url=TEST_DATABASE_URL)
     return Settings(admin_password=ADMIN_PASSWORD, database_path=str(tmp_path / "test.db"))
 
 

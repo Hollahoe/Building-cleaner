@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 1
     settings = load_settings()
-    round_id = seed_demo(Repo(settings.database_path))
+    round_id = seed_demo(Repo(settings.database_path, settings.database_url))
     print(f"예시 공동구매를 만들었습니다 (id={round_id}, DB={settings.database_path}).")
     return 0
 

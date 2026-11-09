@@ -66,6 +66,17 @@
 </div>
 {%- endmacro %}
 
+{% macro category_checks(values, errors, categories, label) -%}
+<div class="field{% if errors.get('categories') %} has-error{% endif %}">
+  <span class="label">{{ label }} <span class="req">필수</span></span>
+  {% set picked = (values.get('categories') or '').split(', ') %}
+  <div class="choices">
+    {% for c in categories %}<label class="check"><input type="checkbox" name="categories" value="{{ c }}"{% if c in picked %} checked{% endif %}> {{ c }}</label>{% endfor %}
+  </div>
+  {{ error(errors, "categories") }}
+</div>
+{%- endmacro %}
+
 {% macro marketing_consent(values) -%}
 <div class="consent">
   <p class="consent-title">새 공동구매 소식 받기 <span class="opt">선택</span></p>

@@ -18,6 +18,7 @@
       <a class="brand" href="/">{{ s.brand_name }}</a>
       <nav aria-label="주요 메뉴">
         <a href="/rounds">공동구매</a>
+        <a href="/demand">우리 동네 신청</a>
         <a href="/diagnosis">무료 진단</a>
         {% if s.kakao_url %}<a href="{{ s.kakao_url }}" rel="noopener">카톡 문의</a>{% endif %}
       </nav>
@@ -33,7 +34,7 @@
       {% if s.contact_phone or s.contact_email %}
       <p>문의 {% if s.contact_phone %}<a href="tel:{{ s.contact_phone }}">{{ s.contact_phone }}</a>{% endif %}{% if s.contact_phone and s.contact_email %} · {% endif %}{% if s.contact_email %}<a href="mailto:{{ s.contact_email }}">{{ s.contact_email }}</a>{% endif %}</p>
       {% endif %}
-      <p><a href="/privacy"><strong>개인정보처리방침</strong></a> · <a href="/terms">이용 안내</a></p>
+      <p><a href="/privacy"><strong>개인정보처리방침</strong></a> · <a href="/terms">이용 안내</a> · <a href="/partners">협력 업체 등록</a></p>
     </div>
   </footer>
 </body>

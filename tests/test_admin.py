@@ -4,7 +4,7 @@ import io
 from fastapi.testclient import TestClient
 
 from app.config import Settings
-from app.main import create_app
+from app.web import create_app
 
 from .conftest import ADMIN_PASSWORD, csrf_from
 

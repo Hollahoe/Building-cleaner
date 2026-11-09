@@ -200,3 +200,11 @@ textarea { min-height: 88px; }
 .inline-form { display: grid; gap: 6px; margin-top: 8px; }
 .inline-form label { font-weight: 600; font-size: 15px; }
 code { background: var(--bg-soft); padding: 1px 6px; border-radius: 4px; }
+
+/* 모이고 있는 공동구매 게시판 */
+.board { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .board { grid-template-columns: 1fr 1fr; } }
+.board-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.board-item.reached { border-color: var(--good); background: var(--good-tint); }
+.board-item p { margin: 6px 0; }
+.board-head { font-size: 17px; }

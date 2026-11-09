@@ -1,80 +1,122 @@
-"""SQLite 저장소.
+"""저장소: 로컬은 SQLite, 배포(Supabase)는 Postgres.
 
-DB 접근은 이 파일에만 둡니다. 나중에 Postgres 등으로 옮길 때 이 파일만 바꾸면 됩니다.
+`DATABASE_URL`이 있으면 Postgres, 없으면 `DATABASE_PATH`의 SQLite 파일을 씁니다.
+DB 접근은 이 파일에만 둡니다. SQL은 `?` 자리표시자로 쓰고 Postgres에서는 `%s`로 바꿉니다.
 """
 
 from __future__ import annotations
 
 import sqlite3
+from collections import Counter
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import date, datetime
 from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
 KST = ZoneInfo("Asia/Seoul")
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS leads (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    created_at TEXT NOT NULL,
-    name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    district TEXT NOT NULL,
-    building_type TEXT NOT NULL,
-    floor_area TEXT NOT NULL DEFAULT '',
-    floors INTEGER,
-    has_elevator INTEGER,
-    monthly_cost INTEGER,
-    concerns TEXT NOT NULL DEFAULT '',
-    message TEXT NOT NULL DEFAULT '',
-    consent_collect_at TEXT NOT NULL,
-    consent_marketing INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT '신규',
-    admin_memo TEXT NOT NULL DEFAULT ''
-);
-
-CREATE TABLE IF NOT EXISTS rounds (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    slug TEXT NOT NULL UNIQUE,
-    title TEXT NOT NULL,
-    category TEXT NOT NULL,
-    district TEXT NOT NULL,
-    summary TEXT NOT NULL,
-    details TEXT NOT NULL DEFAULT '',
-    target_buildings INTEGER NOT NULL,
-    deadline TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'draft',
-    tiers_json TEXT NOT NULL,
-    price_note TEXT NOT NULL DEFAULT '',
-    fee_disclosure TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS participations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    round_id INTEGER NOT NULL REFERENCES rounds(id),
-    created_at TEXT NOT NULL,
-    name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    district TEXT NOT NULL,
-    building_type TEXT NOT NULL,
-    floor_area TEXT NOT NULL DEFAULT '',
-    floors INTEGER,
-    current_cost INTEGER,
-    message TEXT NOT NULL DEFAULT '',
-    consent_collect_at TEXT NOT NULL,
-    consent_vendor_share INTEGER NOT NULL DEFAULT 0,
-    consent_marketing INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT '신청',
-    admin_memo TEXT NOT NULL DEFAULT ''
-);
-
-CREATE INDEX IF NOT EXISTS idx_participations_round ON participations(round_id);
-"""
-
 LEAD_STATUSES: tuple[str, ...] = ("신규", "연락함", "진단 완료", "계약", "보류")
 PARTICIPATION_STATUSES: tuple[str, ...] = ("신청", "확정", "취소")
+DEMAND_STATUSES: tuple[str, ...] = ("대기", "연락함", "라운드 안내", "취소")
+PARTNER_STATUSES: tuple[str, ...] = ("신규", "연락함", "견적 받음", "협력 중", "보류")
+
+_TABLES: dict[str, str] = {
+    "leads": """
+        {id},
+        created_at TEXT NOT NULL,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        district TEXT NOT NULL,
+        building_type TEXT NOT NULL,
+        floor_area TEXT NOT NULL DEFAULT '',
+        floors INTEGER,
+        has_elevator INTEGER,
+        monthly_cost BIGINT,
+        concerns TEXT NOT NULL DEFAULT '',
+        message TEXT NOT NULL DEFAULT '',
+        consent_collect_at TEXT NOT NULL,
+        consent_marketing INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT '신규',
+        admin_memo TEXT NOT NULL DEFAULT ''
+    """,
+    "rounds": """
+        {id},
+        slug TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        district TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        details TEXT NOT NULL DEFAULT '',
+        target_buildings INTEGER NOT NULL,
+        deadline TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        tiers_json TEXT NOT NULL,
+        price_note TEXT NOT NULL DEFAULT '',
+        fee_disclosure TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL
+    """,
+    "participations": """
+        {id},
+        round_id BIGINT NOT NULL REFERENCES rounds(id),
+        created_at TEXT NOT NULL,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        district TEXT NOT NULL,
+        building_type TEXT NOT NULL,
+        floor_area TEXT NOT NULL DEFAULT '',
+        floors INTEGER,
+        current_cost BIGINT,
+        message TEXT NOT NULL DEFAULT '',
+        consent_collect_at TEXT NOT NULL,
+        consent_vendor_share INTEGER NOT NULL DEFAULT 0,
+        consent_marketing INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT '신청',
+        admin_memo TEXT NOT NULL DEFAULT ''
+    """,
+    "demands": """
+        {id},
+        created_at TEXT NOT NULL,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        area TEXT NOT NULL,
+        categories TEXT NOT NULL,
+        building_type TEXT NOT NULL,
+        floor_area TEXT NOT NULL DEFAULT '',
+        floors INTEGER,
+        current_cost BIGINT,
+        message TEXT NOT NULL DEFAULT '',
+        consent_collect_at TEXT NOT NULL,
+        consent_marketing INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT '대기',
+        admin_memo TEXT NOT NULL DEFAULT ''
+    """,
+    "partners": """
+        {id},
+        created_at TEXT NOT NULL,
+        company TEXT NOT NULL,
+        contact_name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        email TEXT NOT NULL DEFAULT '',
+        categories TEXT NOT NULL,
+        service_area TEXT NOT NULL,
+        license_info TEXT NOT NULL DEFAULT '',
+        bulk_discount TEXT NOT NULL DEFAULT '',
+        message TEXT NOT NULL DEFAULT '',
+        consent_collect_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT '신규',
+        admin_memo TEXT NOT NULL DEFAULT ''
+    """,
+}
+_INDEXES = (
+    "CREATE INDEX IF NOT EXISTS idx_participations_round ON participations(round_id)",
+    "CREATE INDEX IF NOT EXISTS idx_demands_phone ON demands(phone)",
+)
+_ID_COLUMN = {
+    "sqlite": "id INTEGER PRIMARY KEY AUTOINCREMENT",
+    "postgres": "id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY",
+}
 
 _LEAD_COLUMNS = (
     "name", "phone", "district", "building_type", "floor_area", "floors", "has_elevator",
@@ -88,21 +130,43 @@ _PARTICIPATION_COLUMNS = (
     "name", "phone", "district", "building_type", "floor_area", "floors", "current_cost",
     "message", "consent_vendor_share", "consent_marketing",
 )
+_DEMAND_COLUMNS = (
+    "name", "phone", "area", "categories", "building_type", "floor_area", "floors",
+    "current_cost", "message", "consent_marketing",
+)
+_PARTNER_COLUMNS = (
+    "company", "contact_name", "phone", "email", "categories", "service_area", "license_info",
+    "bulk_discount", "message",
+)
 
+# 상태를 바꿀 수 있는 표와 그 표의 상태 목록 (SQL에 들어가는 표 이름은 여기 있는 것만)
+_STATUS_TABLES: dict[str, tuple[str, ...]] = {
+    "leads": LEAD_STATUSES,
+    "participations": PARTICIPATION_STATUSES,
+    "demands": DEMAND_STATUSES,
+    "partners": PARTNER_STATUSES,
+}
 
 # 값이 비어 오면 넣을 기본값 (NOT NULL 열).
 _DEFAULTS: dict[str, object] = {
     "floor_area": "", "concerns": "", "message": "", "details": "", "price_note": "",
-    "fee_disclosure": "", "consent_marketing": 0, "consent_vendor_share": 0,
+    "fee_disclosure": "", "consent_marketing": 0, "consent_vendor_share": 0, "email": "",
+    "license_info": "", "bulk_discount": "",
 }
 
+Row = Any  # sqlite3.Row 또는 dict (둘 다 row["열"]로 읽음)
 
-def _values(data: dict, cols: list[str]) -> list[object]:
+
+def _values(data: dict, cols: list[str] | tuple[str, ...]) -> list[object]:
     out = []
     for c in cols:
         v = data.get(c)
         out.append(_DEFAULTS.get(c) if v is None and c in _DEFAULTS else v)
     return out
+
+
+def split_categories(raw: str) -> list[str]:
+    return [c.strip() for c in raw.split(",") if c.strip()]
 
 
 def now_kst() -> datetime:
@@ -118,142 +182,204 @@ def _stamp() -> str:
 
 
 class Repo:
-    def __init__(self, path: str) -> None:
-        self.path = path
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with self._conn() as conn:
-            conn.executescript(SCHEMA)
+    def __init__(self, database_path: str = "data/app.db", database_url: str = "") -> None:
+        self.url = database_url.strip()
+        self.dialect = "postgres" if self.url else "sqlite"
+        self.path = database_path
+        if self.dialect == "sqlite":
+            Path(database_path).parent.mkdir(parents=True, exist_ok=True)
+        self._create_schema()
 
+    # ---- 연결 -------------------------------------------------------------
     @contextmanager
-    def _conn(self) -> Iterator[sqlite3.Connection]:
-        conn = sqlite3.connect(self.path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
+    def _conn(self) -> Iterator[Any]:
+        if self.dialect == "postgres":
+            import psycopg
+            from psycopg.rows import dict_row
+
+            # Supabase 트랜잭션 풀러(6543)는 prepared statement를 지원하지 않아 끕니다.
+            conn = psycopg.connect(self.url, prepare_threshold=None, row_factory=dict_row,
+                                   connect_timeout=10)
+        else:
+            conn = sqlite3.connect(self.path)
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA foreign_keys = ON")
         try:
             yield conn
             conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
         finally:
             conn.close()
 
+    def _sql(self, sql: str) -> str:
+        return sql.replace("?", "%s") if self.dialect == "postgres" else sql
+
+    def _create_schema(self) -> None:
+        id_col = _ID_COLUMN[self.dialect]
+        with self._conn() as conn:
+            for name, body in _TABLES.items():
+                conn.execute(f"CREATE TABLE IF NOT EXISTS {name} ({body.format(id=id_col)})")
+            for stmt in _INDEXES:
+                conn.execute(stmt)
+
+    def _all(self, sql: str, params: tuple | list = ()) -> list[Row]:
+        with self._conn() as conn:
+            return conn.execute(self._sql(sql), params).fetchall()
+
+    def _one(self, sql: str, params: tuple | list = ()) -> Row | None:
+        with self._conn() as conn:
+            return conn.execute(self._sql(sql), params).fetchone()
+
+    def _write(self, sql: str, params: tuple | list = ()) -> int:
+        with self._conn() as conn:
+            return conn.execute(self._sql(sql), params).rowcount
+
+    def _insert(self, table: str, cols: list[str], values: list[object]) -> int:
+        sql = f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('?' for _ in cols)})"
+        with self._conn() as conn:
+            if self.dialect == "postgres":
+                return conn.execute(self._sql(sql + " RETURNING id"), values).fetchone()["id"]
+            return conn.execute(sql, values).lastrowid
+
+    def update_status(self, table: str, row_id: int, status: str, memo: str) -> bool:
+        if table not in _STATUS_TABLES or status not in _STATUS_TABLES[table]:
+            raise ValueError("허용되지 않은 표나 상태입니다.")
+        return self._write(f"UPDATE {table} SET status = ?, admin_memo = ? WHERE id = ?",
+                           (status, memo, row_id)) == 1
+
     # ---- 무료 진단 신청 -------------------------------------------------
     def add_lead(self, data: dict) -> int:
-        cols = list(_LEAD_COLUMNS)
-        values = _values(data, cols)
         stamp = _stamp()
-        sql = (
-            f"INSERT INTO leads ({', '.join(cols)}, created_at, consent_collect_at) "
-            f"VALUES ({', '.join('?' for _ in cols)}, ?, ?)"
-        )
-        with self._conn() as conn:
-            return conn.execute(sql, [*values, stamp, stamp]).lastrowid
+        cols = [*_LEAD_COLUMNS, "created_at", "consent_collect_at"]
+        return self._insert("leads", cols, [*_values(data, _LEAD_COLUMNS), stamp, stamp])
 
-    def list_leads(self) -> list[sqlite3.Row]:
-        with self._conn() as conn:
-            return conn.execute("SELECT * FROM leads ORDER BY id DESC").fetchall()
+    def list_leads(self) -> list[Row]:
+        return self._all("SELECT * FROM leads ORDER BY id DESC")
 
-    def get_lead(self, lead_id: int) -> sqlite3.Row | None:
-        with self._conn() as conn:
-            return conn.execute("SELECT * FROM leads WHERE id = ?", (lead_id,)).fetchone()
+    def get_lead(self, lead_id: int) -> Row | None:
+        return self._one("SELECT * FROM leads WHERE id = ?", (lead_id,))
 
     def update_lead(self, lead_id: int, status: str, memo: str) -> bool:
-        with self._conn() as conn:
-            cur = conn.execute(
-                "UPDATE leads SET status = ?, admin_memo = ? WHERE id = ?", (status, memo, lead_id)
-            )
-            return cur.rowcount == 1
+        return self.update_status("leads", lead_id, status, memo)
 
     def lead_status_counts(self) -> dict[str, int]:
         counts = {s: 0 for s in LEAD_STATUSES}
-        with self._conn() as conn:
-            for row in conn.execute("SELECT status, COUNT(*) AS n FROM leads GROUP BY status"):
-                counts[row["status"]] = row["n"]
+        for row in self._all("SELECT status, COUNT(*) AS n FROM leads GROUP BY status"):
+            counts[row["status"]] = row["n"]
         return counts
 
     # ---- 공동구매 라운드 ------------------------------------------------
     def add_round(self, data: dict, slug: str) -> int:
-        cols = list(_ROUND_COLUMNS)
-        values = _values(data, cols)
-        sql = (
-            f"INSERT INTO rounds ({', '.join(cols)}, slug, created_at) "
-            f"VALUES ({', '.join('?' for _ in cols)}, ?, ?)"
-        )
-        with self._conn() as conn:
-            return conn.execute(sql, [*values, slug, _stamp()]).lastrowid
+        cols = [*_ROUND_COLUMNS, "slug", "created_at"]
+        return self._insert("rounds", cols, [*_values(data, _ROUND_COLUMNS), slug, _stamp()])
 
     def update_round(self, round_id: int, data: dict) -> bool:
-        cols = list(_ROUND_COLUMNS)
-        sets = ", ".join(f"{c} = ?" for c in cols)
-        with self._conn() as conn:
-            cur = conn.execute(
-                f"UPDATE rounds SET {sets} WHERE id = ?", [*_values(data, cols), round_id]
-            )
-            return cur.rowcount == 1
+        sets = ", ".join(f"{c} = ?" for c in _ROUND_COLUMNS)
+        return self._write(f"UPDATE rounds SET {sets} WHERE id = ?",
+                           [*_values(data, _ROUND_COLUMNS), round_id]) == 1
 
-    def get_round(self, round_id: int) -> sqlite3.Row | None:
-        with self._conn() as conn:
-            return conn.execute("SELECT * FROM rounds WHERE id = ?", (round_id,)).fetchone()
+    def get_round(self, round_id: int) -> Row | None:
+        return self._one("SELECT * FROM rounds WHERE id = ?", (round_id,))
 
-    def get_round_by_slug(self, slug: str) -> sqlite3.Row | None:
-        with self._conn() as conn:
-            return conn.execute("SELECT * FROM rounds WHERE slug = ?", (slug,)).fetchone()
+    def get_round_by_slug(self, slug: str) -> Row | None:
+        return self._one("SELECT * FROM rounds WHERE slug = ?", (slug,))
 
-    def list_rounds(self, statuses: tuple[str, ...] | None = None) -> list[sqlite3.Row]:
-        with self._conn() as conn:
-            if statuses is None:
-                return conn.execute("SELECT * FROM rounds ORDER BY id DESC").fetchall()
-            marks = ", ".join("?" for _ in statuses)
-            return conn.execute(
-                f"SELECT * FROM rounds WHERE status IN ({marks}) ORDER BY deadline ASC, id DESC",
-                statuses,
-            ).fetchall()
+    def list_rounds(self, statuses: tuple[str, ...] | None = None) -> list[Row]:
+        if statuses is None:
+            return self._all("SELECT * FROM rounds ORDER BY id DESC")
+        marks = ", ".join("?" for _ in statuses)
+        return self._all(
+            f"SELECT * FROM rounds WHERE status IN ({marks}) ORDER BY deadline ASC, id DESC",
+            statuses,
+        )
 
     def participant_counts(self) -> dict[int, int]:
         """라운드별 참여 건물 수 (취소 제외)."""
-        with self._conn() as conn:
-            rows = conn.execute(
-                "SELECT round_id, COUNT(*) AS n FROM participations "
-                "WHERE status != '취소' GROUP BY round_id"
-            ).fetchall()
+        rows = self._all(
+            "SELECT round_id, COUNT(*) AS n FROM participations "
+            "WHERE status != '취소' GROUP BY round_id"
+        )
         return {row["round_id"]: row["n"] for row in rows}
 
     # ---- 라운드 참여 ----------------------------------------------------
     def add_participation(self, round_id: int, data: dict) -> int:
-        cols = list(_PARTICIPATION_COLUMNS)
-        values = _values(data, cols)
-        sql = (
-            f"INSERT INTO participations ({', '.join(cols)}, round_id, created_at, consent_collect_at) "
-            f"VALUES ({', '.join('?' for _ in cols)}, ?, ?, ?)"
-        )
         stamp = _stamp()
-        with self._conn() as conn:
-            return conn.execute(sql, [*values, round_id, stamp, stamp]).lastrowid
+        cols = [*_PARTICIPATION_COLUMNS, "round_id", "created_at", "consent_collect_at"]
+        values = [*_values(data, _PARTICIPATION_COLUMNS), round_id, stamp, stamp]
+        return self._insert("participations", cols, values)
 
     def has_active_participation(self, round_id: int, phone: str) -> bool:
         """같은 전화번호가 이 라운드에 이미 (취소되지 않은) 신청을 했는지."""
-        with self._conn() as conn:
-            row = conn.execute(
-                "SELECT 1 FROM participations WHERE round_id = ? AND phone = ? AND status != '취소' "
-                "LIMIT 1",
-                (round_id, phone),
-            ).fetchone()
+        row = self._one(
+            "SELECT 1 AS x FROM participations WHERE round_id = ? AND phone = ? "
+            "AND status != '취소' LIMIT 1",
+            (round_id, phone),
+        )
         return row is not None
 
-    def list_participations(self, round_id: int) -> list[sqlite3.Row]:
-        with self._conn() as conn:
-            return conn.execute(
-                "SELECT * FROM participations WHERE round_id = ? ORDER BY id ASC", (round_id,)
-            ).fetchall()
+    def list_participations(self, round_id: int) -> list[Row]:
+        return self._all("SELECT * FROM participations WHERE round_id = ? ORDER BY id ASC",
+                         (round_id,))
 
-    def get_participation(self, participation_id: int) -> sqlite3.Row | None:
-        with self._conn() as conn:
-            return conn.execute(
-                "SELECT * FROM participations WHERE id = ?", (participation_id,)
-            ).fetchone()
+    def get_participation(self, participation_id: int) -> Row | None:
+        return self._one("SELECT * FROM participations WHERE id = ?", (participation_id,))
 
     def update_participation(self, participation_id: int, status: str, memo: str) -> bool:
-        with self._conn() as conn:
-            cur = conn.execute(
-                "UPDATE participations SET status = ?, admin_memo = ? WHERE id = ?",
-                (status, memo, participation_id),
-            )
-            return cur.rowcount == 1
+        return self.update_status("participations", participation_id, status, memo)
+
+    # ---- 공동구매 희망 등록 ---------------------------------------------
+    def add_or_merge_demand(self, data: dict) -> tuple[int, bool]:
+        """같은 번호·같은 동네의 (취소 안 된) 등록이 있으면 항목을 합칩니다.
+
+        한 사람이 여러 번 눌러 수요 숫자가 부풀려지지 않게 하려는 것입니다.
+        돌려주는 값: (등록 id, 합쳐졌는지)
+        """
+        existing = self._one(
+            "SELECT * FROM demands WHERE phone = ? AND area = ? AND status != '취소' "
+            "ORDER BY id ASC LIMIT 1",
+            (data["phone"], data["area"]),
+        )
+        if existing is None:
+            stamp = _stamp()
+            cols = [*_DEMAND_COLUMNS, "created_at", "consent_collect_at"]
+            return self._insert("demands", cols, [*_values(data, _DEMAND_COLUMNS), stamp, stamp]), False
+        merged = split_categories(existing["categories"])
+        for c in split_categories(data["categories"]):
+            if c not in merged:
+                merged.append(c)
+        updated = {**data, "categories": ", ".join(merged)}
+        cols = [c for c in _DEMAND_COLUMNS if c not in ("phone", "area")]
+        sets = ", ".join(f"{c} = ?" for c in cols)
+        self._write(f"UPDATE demands SET {sets} WHERE id = ?",
+                    [*_values(updated, cols), existing["id"]])
+        return existing["id"], True
+
+    def list_demands(self) -> list[Row]:
+        return self._all("SELECT * FROM demands ORDER BY id DESC")
+
+    def get_demand(self, demand_id: int) -> Row | None:
+        return self._one("SELECT * FROM demands WHERE id = ?", (demand_id,))
+
+    def demand_board(self) -> list[dict[str, Any]]:
+        """동네·항목별로 모인 건물 수. 이름이나 연락처는 담지 않습니다."""
+        counter: Counter[tuple[str, str]] = Counter()
+        for row in self._all("SELECT area, categories FROM demands WHERE status != '취소'"):
+            for category in split_categories(row["categories"]):
+                counter[(row["area"], category)] += 1
+        board = [{"area": a, "category": c, "count": n} for (a, c), n in counter.items()]
+        board.sort(key=lambda x: (-x["count"], x["area"], x["category"]))
+        return board
+
+    # ---- 협력 업체 등록 -------------------------------------------------
+    def add_partner(self, data: dict) -> int:
+        stamp = _stamp()
+        cols = [*_PARTNER_COLUMNS, "created_at", "consent_collect_at"]
+        return self._insert("partners", cols, [*_values(data, _PARTNER_COLUMNS), stamp, stamp])
+
+    def list_partners(self) -> list[Row]:
+        return self._all("SELECT * FROM partners ORDER BY id DESC")
+
+    def get_partner(self, partner_id: int) -> Row | None:
+        return self._one("SELECT * FROM partners WHERE id = ?", (partner_id,))

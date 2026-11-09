@@ -170,6 +170,68 @@ def validate_join(form: FormData) -> tuple[dict[str, Any], Errors]:
     return data, errors
 
 
+def _categories(form: FormData, errors: Errors, label: str = "항목") -> str:
+    picked = [c for c in form.getlist("categories") if c in ALLOWED_CATEGORIES]
+    if not picked:
+        errors["categories"] = f"{label}을(를) 하나 이상 골라 주세요."
+    return ", ".join(dict.fromkeys(picked))
+
+
+def validate_demand(form: FormData, service_area: str,
+                    service_dongs: tuple[str, ...]) -> tuple[dict[str, Any], Errors]:
+    """공동구매 희망 등록. 동네는 목록에서 고르거나 직접 적습니다."""
+    errors: Errors = {}
+    data: dict[str, Any] = {
+        "name": _text(form, "name", "이름", errors, max_len=30, required=True),
+        "phone": _phone(form, errors),
+        "building_type": _choice(form, "building_type", "건물 유형", BUILDING_TYPES, errors),
+        "floor_area": _text(form, "floor_area", "연면적", errors, max_len=20),
+        "floors": _int(form, "floors", "층수", errors, lo=1, hi=60),
+        "current_cost": _money(form, "current_cost", "지금 내는 월 비용", errors),
+        "message": _text(form, "message", "남길 말", errors, max_len=1000),
+        "consent_marketing": 1 if _checked(form, "consent_marketing") else 0,
+    }
+    dong = str(form.get("dong") or "").strip()
+    other = " ".join(str(form.get("area_other") or "").split())
+    data["dong"], data["area_other"] = dong, other
+    if dong and dong in service_dongs:
+        data["area"] = f"{service_area} {dong}"
+    elif other:
+        if len(other) > 40:
+            errors["area_other"] = "동네는 40자 이내로 적어 주세요."
+        data["area"] = other
+    else:
+        errors["area_other" if not service_dongs else "dong"] = "건물이 있는 동네를 골라 주시거나 적어 주세요."
+        data["area"] = ""
+    data["categories"] = _categories(form, errors, "공동구매하고 싶은 항목")
+    _require_collect_consent(form, errors)
+    return data, errors
+
+
+BULK_DISCOUNT_CHOICES: tuple[str, ...] = ("가능", "협의", "어려움")
+EMAIL_RE = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+
+
+def validate_partner(form: FormData) -> tuple[dict[str, Any], Errors]:
+    """협력 업체 등록."""
+    errors: Errors = {}
+    data: dict[str, Any] = {
+        "company": _text(form, "company", "상호", errors, max_len=60, required=True),
+        "contact_name": _text(form, "contact_name", "담당자 이름", errors, max_len=30, required=True),
+        "phone": _phone(form, errors),
+        "email": _text(form, "email", "이메일", errors, max_len=120),
+        "service_area": _text(form, "service_area", "작업 가능 지역", errors, max_len=100, required=True),
+        "license_info": _text(form, "license_info", "등록·신고 정보", errors, max_len=200),
+        "bulk_discount": _choice(form, "bulk_discount", "묶음 할인 가능 여부", BULK_DISCOUNT_CHOICES, errors),
+        "message": _text(form, "message", "남길 말", errors, max_len=1000),
+    }
+    if data["email"] and not EMAIL_RE.fullmatch(data["email"]):
+        errors["email"] = "이메일 주소를 확인해 주세요."
+    data["categories"] = _categories(form, errors, "할 수 있는 용역")
+    _require_collect_consent(form, errors)
+    return data, errors
+
+
 def validate_round(form: FormData) -> tuple[dict[str, Any], Errors]:
     errors: Errors = {}
     data: dict[str, Any] = {

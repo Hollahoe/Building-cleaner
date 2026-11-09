@@ -8,7 +8,8 @@ from .conftest import VALID_PERSON, csrf_from
 def test_home_empty_state_and_security_headers(client):
     res = client.get("/")
     assert res.status_code == 200
-    assert "첫 공동구매를 준비하고 있습니다" in res.text
+    assert "아직 모인 신청이 없습니다" in res.text
+    assert "빌딩모아관리" in res.text
     assert res.headers["X-Frame-Options"] == "DENY"
     assert "script-src 'none'" in res.headers["Content-Security-Policy"]
 

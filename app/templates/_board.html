@@ -1,0 +1,26 @@
+{% macro demand_board(board, s, compact=false) -%}
+{% if board %}
+<ul class="board">
+  {% for b in board %}
+  <li class="board-item{% if b.reached %} reached{% endif %}">
+    <div class="board-head">
+      <strong>{{ b.area }}</strong> · {{ b.category }}
+    </div>
+    <p class="count"><strong>{{ b.count }}채</strong> 모임 / {{ s.demand_threshold }}채 모이면 견적 요청</p>
+    <progress value="{{ [b.count, s.demand_threshold] | min }}" max="{{ s.demand_threshold }}" aria-label="{{ b.area }} {{ b.category }} {{ b.count }}채 모임, 기준 {{ s.demand_threshold }}채"></progress>
+    {% if b.reached %}
+    <p class="next">기준을 채웠습니다. 업체 견적을 받아 공동구매를 준비합니다.</p>
+    {% else %}
+    <p class="next">{{ b.remaining }}채 더 모이면 업체 견적을 받아 공동구매를 엽니다.</p>
+    {% endif %}
+    {% if not compact %}<a class="btn btn-small" href="/demand?category={{ b.category | urlencode }}">이 공동구매 같이 신청하기</a>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty">
+  <p><strong>아직 모인 신청이 없습니다. 첫 번째로 신청해 주세요.</strong></p>
+  <p>같은 동네, 같은 항목으로 {{ s.demand_threshold }}채가 모이면 업체 견적을 받아 공동구매를 엽니다.</p>
+</div>
+{% endif %}
+{%- endmacro %}
