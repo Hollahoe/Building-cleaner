@@ -22,7 +22,8 @@
 5. [`docs/strategy.md`](docs/strategy.md)와 [`docs/investment.md`](docs/investment.md): 포지셔닝, 쐐기, 밀도 전략, 중단 기준, 그리고 VC 투자를 받을 수 있는지에 대한 판단.
 6. [`docs/platform.md`](docs/platform.md): 웹 창구를 어디까지 만들었고 언제 무엇을 더 만들지, 출시 체크리스트.
 7. [`docs/deploy-guide.md`](docs/deploy-guide.md): **도메인 · GitHub · Supabase · Vercel로 사이트를 공개하는 방법**(단계별).
-8. [`docs/strategy-report.md`](docs/strategy-report.md): **전략 보고서 요약 v4**(보강한 근거, 사업구조, 기업가치, 경쟁 지도, 90일 검증). 재무 모델 [`tools/financial-model-60m-v4.xlsx`](tools/financial-model-60m-v4.xlsx), 원자료 [`research/`](research/README.md).
+8. [`docs/빌딩모아관리_전략보고서_2026-11-10.docx`](docs/빌딩모아관리_전략보고서_2026-11-10.docx): **한 권으로 읽는 워드 보고서(21쪽)**. 시장, 고객, 경쟁, 규제, 경제성, 사업구조, 기업가치, 돌파 전략, 브랜딩, 로드맵을 한 파일에 담았습니다. 먼저 이것부터 보세요.
+   [`docs/strategy-report.md`](docs/strategy-report.md): **전략 보고서 요약 v4**(보강한 근거, 사업구조, 기업가치, 경쟁 지도, 90일 검증). 재무 모델 [`tools/financial-model-60m-v4.xlsx`](tools/financial-model-60m-v4.xlsx), 원자료 [`research/`](research/README.md).
 9. [`docs/brand-strategy.md`](docs/brand-strategy.md): **브랜딩 전략 요약**(약속 문장, 이름 후보와 상표 확인 절차, 메시지, 접점 다섯 개, 90일 실행).
 10. [`docs/execution-plan.md`](docs/execution-plan.md): **36개월 실행계획 요약**(조사로 바뀐 결론, 재무 모델 결과, 게이트). 재무 모델은 [`tools/financial-model-36m.xlsx`](tools/financial-model-36m.xlsx).
 11. [`docs/benchmark.md`](docs/benchmark.md): **경쟁사 17곳 벤치마킹, 차별화, 단계별 로드맵, 300억까지의 숫자**. 액션 아이템 200개는 [`ops/action-items.csv`](ops/action-items.csv).
