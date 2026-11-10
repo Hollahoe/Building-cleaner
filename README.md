@@ -23,7 +23,8 @@
 6. [`docs/platform.md`](docs/platform.md): 웹 창구를 어디까지 만들었고 언제 무엇을 더 만들지, 출시 체크리스트.
 7. [`docs/deploy-guide.md`](docs/deploy-guide.md): **도메인 · GitHub · Supabase · Vercel로 사이트를 공개하는 방법**(단계별).
 8. [`docs/strategy-report.md`](docs/strategy-report.md): **전략 보고서 요약 v3**(가치 재산정, 300억 역산, 경쟁 지도, 돌파 전략, 90일 검증). 재무 모델 [`tools/financial-model-60m-v3.xlsx`](tools/financial-model-60m-v3.xlsx), 원자료 [`research/`](research/README.md).
-9. [`docs/execution-plan.md`](docs/execution-plan.md): **36개월 실행계획 요약**(조사로 바뀐 결론, 재무 모델 결과, 게이트). 재무 모델은 [`tools/financial-model-36m.xlsx`](tools/financial-model-36m.xlsx).
+9. [`docs/brand-strategy.md`](docs/brand-strategy.md): **브랜딩 전략 요약**(약속 문장, 이름 후보와 상표 확인 절차, 메시지, 접점 다섯 개, 90일 실행).
+10. [`docs/execution-plan.md`](docs/execution-plan.md): **36개월 실행계획 요약**(조사로 바뀐 결론, 재무 모델 결과, 게이트). 재무 모델은 [`tools/financial-model-36m.xlsx`](tools/financial-model-36m.xlsx).
 10. [`docs/benchmark.md`](docs/benchmark.md): **경쟁사 17곳 벤치마킹, 차별화, 단계별 로드맵, 300억까지의 숫자**. 액션 아이템 200개는 [`ops/action-items.csv`](ops/action-items.csv).
 
 ## 웹 창구 실행하기
