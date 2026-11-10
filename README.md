@@ -22,7 +22,7 @@
 5. [`docs/strategy.md`](docs/strategy.md)와 [`docs/investment.md`](docs/investment.md): 포지셔닝, 쐐기, 밀도 전략, 중단 기준, 그리고 VC 투자를 받을 수 있는지에 대한 판단.
 6. [`docs/platform.md`](docs/platform.md): 웹 창구를 어디까지 만들었고 언제 무엇을 더 만들지, 출시 체크리스트.
 7. [`docs/deploy-guide.md`](docs/deploy-guide.md): **도메인 · GitHub · Supabase · Vercel로 사이트를 공개하는 방법**(단계별).
-8. [`docs/strategy-report.md`](docs/strategy-report.md): **전략 보고서 요약 v3**(가치 재산정, 300억 역산, 경쟁 지도, 돌파 전략, 90일 검증). 재무 모델 [`tools/financial-model-60m-v3.xlsx`](tools/financial-model-60m-v3.xlsx), 원자료 [`research/`](research/README.md).
+8. [`docs/strategy-report.md`](docs/strategy-report.md): **전략 보고서 요약 v4**(보강한 근거, 사업구조, 기업가치, 경쟁 지도, 90일 검증). 재무 모델 [`tools/financial-model-60m-v4.xlsx`](tools/financial-model-60m-v4.xlsx), 원자료 [`research/`](research/README.md).
 9. [`docs/brand-strategy.md`](docs/brand-strategy.md): **브랜딩 전략 요약**(약속 문장, 이름 후보와 상표 확인 절차, 메시지, 접점 다섯 개, 90일 실행).
 10. [`docs/execution-plan.md`](docs/execution-plan.md): **36개월 실행계획 요약**(조사로 바뀐 결론, 재무 모델 결과, 게이트). 재무 모델은 [`tools/financial-model-36m.xlsx`](tools/financial-model-36m.xlsx).
 11. [`docs/benchmark.md`](docs/benchmark.md): **경쟁사 17곳 벤치마킹, 차별화, 단계별 로드맵, 300억까지의 숫자**. 액션 아이템 200개는 [`ops/action-items.csv`](ops/action-items.csv).
@@ -64,7 +64,7 @@ ADMIN_PASSWORD=원하는비밀번호 uvicorn app.asgi:app --reload --port 8000
 | `pilot/` | [건물 건강진단 리포트](pilot/building-health-report-template.md), [케이스 스터디](pilot/case-study-template.md) | Month 2–3 |
 | `ops/` | [건물 대장 CSV](ops/buildings.csv), [민원·이슈 로그 CSV](ops/issue-log.csv), [액션 아이템 200개 CSV](ops/action-items.csv), [법정 점검 캘린더](ops/compliance-calendar.md), [카톡 문구](ops/kakao-templates.md), [월간 보고서](ops/monthly-report-template.md) | 파일럿부터 매일 |
 | `research/` | [원자료](research/README.md): 항목별 가격(조례·고시·시장 사례), 경쟁사 DART 재무 요약 | 숫자를 확인할 때 |
-| `tools/` | [`savings-calculator.xlsx`](tools/savings-calculator.xlsx): 고통 집계, 견적 비교, 절감액·수수료 계산, 24개월 사업계획과 VC 규모 역산. [`financial-model-36m.xlsx`](tools/financial-model-36m.xlsx): 36개월 월별 재무 모델 v1. [`financial-model-60m-v2.xlsx`](tools/financial-model-60m-v2.xlsx): 60개월 모델 v2(가치 과대평가, 기록용). [`financial-model-60m-v3.xlsx`](tools/financial-model-60m-v3.xlsx): v3 모델, 영업이익 배수 가치, 300억 역산, 전략안 역산 | Week 2부터 |
+| `tools/` | [`savings-calculator.xlsx`](tools/savings-calculator.xlsx): 고통 집계, 견적 비교, 절감액·수수료 계산, 24개월 사업계획과 VC 규모 역산. [`financial-model-36m.xlsx`](tools/financial-model-36m.xlsx): 36개월 월별 재무 모델 v1. [`financial-model-60m-v2.xlsx`](tools/financial-model-60m-v2.xlsx): 60개월 모델 v2(가치 과대평가, 기록용). [`financial-model-60m-v3.xlsx`](tools/financial-model-60m-v3.xlsx): v3 모델(점검관리 중심, 기록용). [`financial-model-60m-v4.xlsx`](tools/financial-model-60m-v4.xlsx): v4 모델. 점검관리·종합관리·인수·공사관리, 단위경제와 역산, 자금·지분, 근거 시트 | Week 2부터 |
 
 ## 노션으로 옮기기
 
