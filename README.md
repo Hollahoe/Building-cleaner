@@ -37,6 +37,7 @@ ADMIN_PASSWORD=원하는비밀번호 uvicorn app.asgi:app --reload --port 8000
 ```
 
 - 브라우저에서 `http://localhost:8000` (건물주 화면), `http://localhost:8000/admin` (관리자, 아이디 `admin`)
+- **Visual Studio · VS Code에서 열기:** [`docs/visual-studio-guide.md`](docs/visual-studio-guide.md). Windows에서는 `python run_web.py`로 실행합니다(같은 폴더의 `.env`를 읽습니다). VS Code 실행 구성은 `.vscode/`에 있습니다.
 - 화면 확인용 예시 공동구매 넣기: `python -m app.seed --demo` (제목에 [예시]가 붙고 금액은 가상입니다. 실제 운영 DB에는 쓰지 마세요)
 - 테스트: `python -m pytest` (Postgres로도 돌리려면 `TEST_DATABASE_URL=postgresql://… python -m pytest`)
 - 설정(브랜드 이름, 지역, 연락처, 카톡 링크, 비밀번호 등)은 환경 변수로 바꿉니다. 목록과 설명은 [`.env.example`](.env.example)에 있습니다.
