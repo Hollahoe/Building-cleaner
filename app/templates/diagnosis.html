@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}무료 운영비 진단 신청 · {{ s.brand_name }}{% endblock %}
+{% block description %}지금 내는 청소·승강기·소방·보험 비용과 법정 점검 현황을 1장으로 정리해 드립니다. 무료입니다.{% endblock %}
+{% block content %}
+<h1>무료 운영비 진단 신청</h1>
+<p class="lead">지금 내는 운영비, 법정 점검 현황, 줄일 수 있는 곳을 1장 리포트로 정리해 드립니다. 비용은 받지 않습니다.</p>
+{% if errors %}<p class="error-summary" role="alert">입력한 내용을 확인해 주세요.</p>{% endif %}
+<form method="post" action="/diagnosis" class="form" novalidate>
+  {{ m.hidden_fields(csrf_field, csrf_token, honeypot) }}
+  {{ m.contact_and_building(values, errors, building_types) }}
+  <fieldset>
+    <legend>운영 현황</legend>
+    <div class="field">
+      <span class="label">승강기</span>
+      <div class="choices">
+        <label class="check"><input type="radio" name="has_elevator" value="yes"{% if values.get('has_elevator') == 1 %} checked{% endif %}> 있음</label>
+        <label class="check"><input type="radio" name="has_elevator" value="no"{% if values.get('has_elevator') == 0 %} checked{% endif %}> 없음</label>
+      </div>
+    </div>
+    {{ m.input("monthly_cost", "월 관리비(청소·승강기·소방 등 합계)", values, errors, inputmode="numeric", placeholder="예: 120만", hint="대략이어도 괜찮고, 모르시면 비워 두세요.") }}
+    <div class="field">
+      <span class="label">신경 쓰이는 항목 (여러 개 고를 수 있어요)</span>
+      <div class="choices">
+        {% for c in concerns %}<label class="check"><input type="checkbox" name="concerns" value="{{ c }}"{% if c in selected %} checked{% endif %}> {{ c }}</label>{% endfor %}
+      </div>
+    </div>
+    <div class="field">
+      <label for="message">남길 말</label>
+      <textarea id="message" name="message" rows="3" maxlength="1000">{{ m.val(values, 'message') }}</textarea>
+    </div>
+  </fieldset>
+  {{ m.collect_consent(errors, "운영비 진단 리포트 작성, 결과 안내 연락") }}
+  {{ m.marketing_consent(values) }}
+  <button class="btn btn-primary btn-block" type="submit">무료 진단 신청하기</button>
+</form>
+{% endblock %}

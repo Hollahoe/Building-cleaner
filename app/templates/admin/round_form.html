@@ -1,0 +1,88 @@
+{% extends "admin/_layout.html" %}
+{% import "_macros.html" as m %}
+{% block admin %}
+<h1>{% if round %}공동구매 수정{% else %}새 공동구매{% endif %}</h1>
+{% if round %}
+<p>공개 주소: {% if round.status in ('open', 'closed', 'succeeded') %}<a href="/rounds/{{ round.slug }}">/rounds/{{ round.slug }}</a>{% else %}/rounds/{{ round.slug }} (상태가 '준비 중'·'취소'면 공개되지 않습니다){% endif %}</p>
+{% endif %}
+{% if errors %}<p class="error-summary" role="alert">입력한 내용을 확인해 주세요.</p>{% endif %}
+<form method="post" action="{% if round %}/admin/rounds/{{ round.id }}{% else %}/admin/rounds{% endif %}" class="form" novalidate>
+  <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+  {{ m.input("title", "제목", values, errors, required=true, placeholder="예: 망원동 계단·복도 청소 공동구매 1차") }}
+  <div class="field{% if errors.get('category') %} has-error{% endif %}">
+    <label for="category">항목 <span class="req">필수</span></label>
+    <p class="hint">보험·세무·법률·임대 중개는 넣을 수 없습니다(법률 체크리스트 참고).</p>
+    <select id="category" name="category">
+      <option value="">골라 주세요</option>
+      {% for c in categories %}<option value="{{ c }}"{% if values.get('category') == c %} selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+    {{ m.error(errors, "category") }}
+  </div>
+  {{ m.input("district", "지역", values, errors, required=true) }}
+  {{ m.input("summary", "한 줄 소개", values, errors, required=true) }}
+  <div class="field{% if errors.get('details') %} has-error{% endif %}">
+    <label for="details">상세 설명 (작업 범위, 주기, 포함·제외 항목)</label>
+    <textarea id="details" name="details" rows="5">{{ m.val(values, 'details') }}</textarea>
+    {{ m.error(errors, "details") }}
+  </div>
+  <div class="row-2">
+    {{ m.input("target_buildings", "목표 건물 수", values, errors, type="number", required=true, inputmode="numeric") }}
+    {{ m.input("deadline", "신청 마감일", values, errors, type="date", required=true) }}
+  </div>
+  <div class="field{% if errors.get('tiers') %} has-error{% endif %}">
+    <label for="tiers">묶음 단가 구간 <span class="req">필수</span></label>
+    <p class="hint">한 줄에 하나씩 <code>건물 수=1채당 월 단가</code>. 첫 줄은 1채(혼자 계약할 때). <strong>실제 업체 견적서의 숫자만</strong> 적으세요.</p>
+    <textarea id="tiers" name="tiers" rows="5">{{ m.val(values, 'tiers_text') }}</textarea>
+    {{ m.error(errors, "tiers") }}
+  </div>
+  <div class="field{% if errors.get('price_note') %} has-error{% endif %}">
+    <label for="price_note">가격 안내 문구 <span class="req">필수</span></label>
+    <textarea id="price_note" name="price_note" rows="2">{{ m.val(values, 'price_note') }}</textarea>
+    {{ m.error(errors, "price_note") }}
+  </div>
+  <div class="field{% if errors.get('fee_disclosure') %} has-error{% endif %}">
+    <label for="fee_disclosure">운영자 보수·업체 대가 공개 <span class="req">필수</span></label>
+    <p class="hint">업체에서 받는 대가가 있으면 금액이나 비율을 그대로 적으세요.</p>
+    <textarea id="fee_disclosure" name="fee_disclosure" rows="2">{{ m.val(values, 'fee_disclosure') }}</textarea>
+    {{ m.error(errors, "fee_disclosure") }}
+  </div>
+  <div class="field{% if errors.get('status') %} has-error{% endif %}">
+    <label for="status">상태</label>
+    <select id="status" name="status">
+      {% for k, label in round_statuses.items() %}<option value="{{ k }}"{% if values.get('status') == k %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    {{ m.error(errors, "status") }}
+  </div>
+  <button class="btn btn-primary" type="submit">저장</button>
+</form>
+
+{% if round %}
+<section>
+  <h2>참여 신청 ({{ view.count }}채 유효 / 목표 {{ round.target_buildings }}채)</h2>
+  <p><a href="/admin/export/rounds/{{ round.id }}/participants.csv">참여자 엑셀(CSV) 내려받기</a></p>
+  {% if not participations %}<p>아직 참여 신청이 없습니다.</p>{% endif %}
+  {% for p in participations %}
+  <article class="admin-card" id="p-{{ p.id }}">
+    <p class="card-meta">#{{ p.id }} · {{ p.created_at[:16].replace('T', ' ') }} · <strong>{{ p.status }}</strong></p>
+    <h3>{{ p.name }} <a href="tel:{{ p.phone }}">{{ p.phone }}</a></h3>
+    <dl class="facts">
+      <dt>건물</dt><dd>{{ p.district }} · {{ p.building_type }}{% if p.floor_area %} · {{ p.floor_area }}{% endif %}{% if p.floors %} · {{ p.floors }}층{% endif %}</dd>
+      <dt>지금 월 비용</dt><dd>{{ p.current_cost | won }}</dd>
+      <dt>업체 정보 제공</dt><dd>{{ '동의' if p.consent_vendor_share else '미동의 (업체에 건물 정보 전달 금지)' }}</dd>
+      <dt>남긴 말</dt><dd class="prewrap">{{ p.message or '-' }}</dd>
+    </dl>
+    <form method="post" action="/admin/participations/{{ p.id }}" class="inline-form">
+      <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+      <label for="pstatus-{{ p.id }}">상태</label>
+      <select id="pstatus-{{ p.id }}" name="status">
+        {% for st in participation_statuses %}<option value="{{ st }}"{% if st == p.status %} selected{% endif %}>{{ st }}</option>{% endfor %}
+      </select>
+      <label for="pmemo-{{ p.id }}">메모</label>
+      <textarea id="pmemo-{{ p.id }}" name="admin_memo" rows="2">{{ p.admin_memo }}</textarea>
+      <button class="btn btn-small" type="submit">저장</button>
+    </form>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

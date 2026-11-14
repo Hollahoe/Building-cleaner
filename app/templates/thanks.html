@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}신청 완료 · {{ s.brand_name }}{% endblock %}
+{% block content %}
+<section class="panel center">
+  {% if kind == "partner" %}
+  <h1>업체 등록이 접수됐습니다</h1>
+  <p class="lead">등록·신고 정보를 확인하는 대로 연락드리겠습니다. 공동구매 신청이 모이면 묶음 견적을 요청드립니다.</p>
+  {% elif kind == "demand" %}
+  <h1>공동구매 신청이 접수됐습니다</h1>
+  <p class="lead">같은 동네·같은 항목으로 {{ s.demand_threshold }}채가 모이면 업체 견적을 받아 연락드립니다. 이웃 건물주님께도 알려 주시면 더 빨리 모입니다.</p>
+  {% elif kind == "round" %}
+  <h1>참여 신청이 접수됐습니다</h1>
+  <p class="lead">{% if round %}<strong>{{ round.title }}</strong> 참여 신청을 받았습니다. {% endif %}건물을 확인하는 대로 연락드리겠습니다. 신청만으로 계약이 되지는 않습니다.</p>
+  {% else %}
+  <h1>진단 신청이 접수됐습니다</h1>
+  <p class="lead">운영비 진단을 위해 곧 연락드리겠습니다. 최근 3개월 관리비 고지서나 업체 계약서 사진을 준비해 주시면 리포트가 더 정확해집니다.</p>
+  {% endif %}
+  <div class="cta-row center">
+    {% if s.kakao_url %}<a class="btn btn-primary" href="{{ s.kakao_url }}" rel="noopener">카톡으로 먼저 문의하기</a>{% endif %}
+    <a class="btn btn-ghost" href="/">처음으로</a>
+  </div>
+</section>
+{% endblock %}

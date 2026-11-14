@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}협력 업체 등록 · {{ s.brand_name }}{% endblock %}
+{% block description %}{{ s.service_area }}에서 여러 건물을 한 번에 맡을 청소·승강기·소방 협력 업체를 찾습니다.{% endblock %}
+{% block content %}
+<h1>협력 업체 등록</h1>
+<p class="lead">{{ s.service_area }}에서 같은 동네 건물 여러 곳을 한 번에 맡을 업체를 찾습니다. 공동구매 신청이 모이면 등록하신 업체께 묶음 견적을 요청드립니다.</p>
+<ul class="plain">
+  <li>계약은 각 건물주님과 업체가 직접 맺습니다.</li>
+  <li>운영자가 업체로부터 받는 대가가 있다면 공동구매 페이지에 공개합니다.</li>
+  <li>업종별 등록·신고(예: 승강기 유지관리업 등록, 건물위생관리업 신고)를 확인한 뒤 견적을 요청드립니다.</li>
+</ul>
+{% if errors %}<p class="error-summary" role="alert">입력한 내용을 확인해 주세요.</p>{% endif %}
+<form method="post" action="/partners" class="form" novalidate>
+  {{ m.hidden_fields(csrf_field, csrf_token, honeypot) }}
+  <fieldset>
+    <legend>업체 정보</legend>
+    {{ m.input("company", "상호", values, errors, required=true, autocomplete="organization") }}
+    {{ m.category_checks(values, errors, categories, "할 수 있는 용역 (여러 개 고를 수 있어요)") }}
+    {{ m.input("service_area", "작업 가능 지역", values, errors, required=true, placeholder="예: 마포구 전체, 서대문구 일부") }}
+    {{ m.input("license_info", "등록·신고 종류와 번호", values, errors, placeholder="예: 건물위생관리업 신고 제○○호", hint="견적 요청 전에 사본을 받아 확인합니다.") }}
+    <div class="field{% if errors.get('bulk_discount') %} has-error{% endif %}">
+      <span class="label">여러 건물 묶음 할인 <span class="req">필수</span></span>
+      <div class="choices">
+        {% for c in bulk_choices %}<label class="check"><input type="radio" name="bulk_discount" value="{{ c }}"{% if values.get('bulk_discount') == c %} checked{% endif %}> {{ c }}</label>{% endfor %}
+      </div>
+      {{ m.error(errors, "bulk_discount") }}
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>담당자</legend>
+    {{ m.input("contact_name", "담당자 이름", values, errors, required=true, autocomplete="name") }}
+    {{ m.input("phone", "전화번호", values, errors, type="tel", required=true, autocomplete="tel", inputmode="tel") }}
+    {{ m.input("email", "이메일", values, errors, type="text", autocomplete="email", inputmode="email") }}
+    <div class="field">
+      <label for="message">남길 말</label>
+      <textarea id="message" name="message" rows="3" maxlength="1000">{{ m.val(values, 'message') }}</textarea>
+    </div>
+  </fieldset>
+  <div class="consent{% if errors.get('consent_collect') %} has-error{% endif %}">
+    <p class="consent-title">개인정보 수집·이용 동의 <span class="req">필수</span></p>
+    <table class="consent-table">
+      <tr><th scope="row">수집 항목</th><td>담당자 이름, 전화번호, 이메일</td></tr>
+      <tr><th scope="row">이용 목적</th><td><strong>협력 업체 확인과 견적 요청 연락</strong></td></tr>
+      <tr><th scope="row">보유 기간</th><td><strong>등록일부터 1년. 삭제를 요청하시면 바로 지웁니다.</strong></td></tr>
+    </table>
+    <p class="hint">동의하지 않으실 수 있지만, 그러면 연락을 드릴 수 없어 등록이 접수되지 않습니다.</p>
+    <label class="check"><input type="checkbox" name="consent_collect"{% if errors.get('consent_collect') %} aria-invalid="true" aria-describedby="consent_collect-error"{% endif %}> 위 내용에 동의합니다</label>
+    {{ m.error(errors, "consent_collect") }}
+  </div>
+  <button class="btn btn-primary btn-block" type="submit">협력 업체 등록하기</button>
+</form>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "_round_card.html" as rc %}
+{% import "_board.html" as bd %}
+{% block title %}공동구매 · {{ s.brand_name }}{% endblock %}
+{% block content %}
+<h1>공동구매</h1>
+<p class="lead">같은 동네 건물이 모일수록 1채당 단가가 내려갑니다. 계약은 건물주님 명의로 업체와 직접 맺습니다.</p>
+
+<section aria-labelledby="open-h">
+  <h2 id="open-h">모집 중인 공동구매</h2>
+  {% if rounds %}
+  <div class="cards">
+    {% for r in rounds %}{{ rc.card(r) }}{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <p><strong>아직 열린 공동구매가 없습니다.</strong></p>
+    <p>아래에서 동네별 신청이 모이고 있습니다. {{ s.demand_threshold }}채가 모이면 업체 견적을 받아 공동구매를 엽니다.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section aria-labelledby="board-h">
+  <h2 id="board-h">모이고 있는 공동구매</h2>
+  {{ bd.demand_board(board, s) }}
+  <p><a class="btn btn-primary" href="/demand">우리 동네 공동구매 신청</a></p>
+</section>
+{% endblock %}

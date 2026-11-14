@@ -1,0 +1,30 @@
+{% extends "admin/_layout.html" %}
+{% block admin %}
+<h1>공동구매 신청</h1>
+<p>같은 번호·같은 동네로 다시 신청하면 새 줄이 생기지 않고 항목이 합쳐집니다. '취소'로 바꾸면 집계에서 빠집니다. <a href="/admin/export/demand.csv">엑셀(CSV)</a></p>
+{% if not demands %}<p>아직 신청이 없습니다.</p>{% endif %}
+{% for d in demands %}
+<article class="admin-card" id="d-{{ d.id }}">
+  <p class="card-meta">#{{ d.id }} · {{ d.created_at[:16].replace('T', ' ') }} · <strong>{{ d.status }}</strong></p>
+  <h2>{{ d.name }} <a href="tel:{{ d.phone }}">{{ d.phone }}</a></h2>
+  <dl class="facts">
+    <dt>동네</dt><dd>{{ d.area }}</dd>
+    <dt>희망 항목</dt><dd>{{ d.categories }}</dd>
+    <dt>건물</dt><dd>{{ d.building_type }}{% if d.floor_area %} · {{ d.floor_area }}{% endif %}{% if d.floors %} · {{ d.floors }}층{% endif %}</dd>
+    <dt>지금 월 비용</dt><dd>{{ d.current_cost | won }}</dd>
+    <dt>남긴 말</dt><dd class="prewrap">{{ d.message or '-' }}</dd>
+    <dt>소식 수신</dt><dd>{{ '동의' if d.consent_marketing else '미동의' }}</dd>
+  </dl>
+  <form method="post" action="/admin/demand/{{ d.id }}" class="inline-form">
+    <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+    <label for="dstatus-{{ d.id }}">상태</label>
+    <select id="dstatus-{{ d.id }}" name="status">
+      {% for st in statuses %}<option value="{{ st }}"{% if st == d.status %} selected{% endif %}>{{ st }}</option>{% endfor %}
+    </select>
+    <label for="dmemo-{{ d.id }}">메모</label>
+    <textarea id="dmemo-{{ d.id }}" name="admin_memo" rows="2">{{ d.admin_memo }}</textarea>
+    <button class="btn btn-small" type="submit">저장</button>
+  </form>
+</article>
+{% endfor %}
+{% endblock %}

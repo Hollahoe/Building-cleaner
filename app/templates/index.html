@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% import "_round_card.html" as rc %}
+{% import "_board.html" as bd %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">{{ s.service_area }} 꼬마빌딩 · 상가주택 · 원룸 건물주님께</p>
+  <h1>건물 운영비,<br>이웃 건물과 함께 사면 내려갑니다</h1>
+  <p class="lead">청소·승강기·소방 용역을 같은 동네 건물과 묶어 단가를 협상합니다. 업체 관리와 법정 점검 일정은 저희가 대신 챙깁니다.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="/demand">우리 동네 공동구매 신청</a>
+    <a class="btn btn-ghost" href="/diagnosis">무료 운영비 진단</a>
+  </div>
+</section>
+
+{% if rounds %}
+<section aria-labelledby="open-rounds">
+  <h2 id="open-rounds">지금 모집 중인 공동구매</h2>
+  <div class="cards">
+    {% for r in rounds %}{{ rc.card(r) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section aria-labelledby="board-h">
+  <h2 id="board-h">모이고 있는 공동구매</h2>
+  <p class="hint">같은 동네·같은 항목으로 신청한 건물 수입니다. 이름이나 연락처는 보이지 않습니다.</p>
+  {{ bd.demand_board(board, s) }}
+  <p><a class="btn btn-primary" href="/demand">우리 동네도 신청하기</a></p>
+</section>
+
+<section aria-labelledby="how">
+  <h2 id="how">이렇게 진행돼요</h2>
+  <ol class="steps">
+    <li><strong>우리 동네 공동구매 신청</strong><span>동네와 원하는 항목(청소, 승강기, 소방 등)을 남겨 주세요. 비용도 약속도 없습니다.</span></li>
+    <li><strong>{{ s.demand_threshold }}채가 모이면 견적</strong><span>같은 동네 건물이 모이면 업체 2곳 이상에서 묶음 견적을 받습니다.</span></li>
+    <li><strong>공동구매 열림</strong><span>모인 건물 수에 따라 1채당 단가가 얼마나 내려가는지 공개합니다. 단가가 맞을 때만 참여하시면 됩니다.</span></li>
+    <li><strong>계약은 건물주님 명의로</strong><span>업체와 직접 계약하시고, 저희는 업체 선정과 관리를 맡습니다.</span></li>
+    <li><strong>매달 보고</strong><span>점검 결과, 민원 처리, 이번 달 운영비를 카톡으로 보내 드립니다.</span></li>
+  </ol>
+</section>
+
+<section aria-labelledby="fee" class="panel">
+  <h2 id="fee">비용</h2>
+  <p class="big">{{ s.fee_text }}</p>
+  <p class="hint">신청과 운영비 진단은 무료입니다. 보수 조건은 계약 전에 서면으로 안내해 드립니다.</p>
+</section>
+
+<section aria-labelledby="not-do">
+  <h2 id="not-do">저희가 하지 않는 일</h2>
+  <ul class="plain">
+    <li>보험 상품 추천이나 가입 권유. 보험은 지금 증권 정리와 만기 알림까지만 해 드립니다.</li>
+    <li>세무·법률 상담. 필요하시면 전문가께 직접 문의하시도록 안내해 드립니다.</li>
+    <li>임대차 중개. 세입자 모집은 공인중개사 영역입니다.</li>
+    <li>업체로부터 건물주님 모르게 받는 돈. 받는 대가가 있다면 공동구매 페이지에 공개합니다.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="partner-h" class="panel">
+  <h2 id="partner-h">청소·승강기·소방 업체이신가요?</h2>
+  <p>{{ s.service_area }}에서 여러 건물을 한 번에 맡을 수 있는 협력 업체를 찾고 있습니다. 업체 정보를 남겨 주시면 공동구매가 모일 때 견적을 요청드립니다.</p>
+  <a class="btn btn-ghost" href="/partners">협력 업체 등록</a>
+</section>
+
+<section aria-labelledby="faq">
+  <h2 id="faq">자주 묻는 질문</h2>
+  <details>
+    <summary>신청하면 바로 계약해야 하나요?</summary>
+    <p>아닙니다. 신청은 "우리 동네에서 이 항목을 같이 사고 싶다"는 표시입니다. 견적이 나온 뒤 단가를 보고 참여 여부를 정하시면 되고, 비용은 들지 않습니다.</p>
+  </details>
+  <details>
+    <summary>공동구매가 목표 건물 수를 못 채우면 어떻게 되나요?</summary>
+    <p>모인 건물 수에 맞는 단가 구간이 적용됩니다. 그 단가가 지금보다 비싸면 참여하지 않으셔도 됩니다.</p>
+  </details>
+  <details>
+    <summary>업체 계약은 누구 이름으로 하나요?</summary>
+    <p>건물주님 명의로 업체와 직접 계약하십니다. 저희는 계약 당사자가 아니고, 업체를 고르고 관리하는 역할을 합니다.</p>
+  </details>
+  <details>
+    <summary>어느 지역에서 하나요?</summary>
+    <p>지금은 {{ s.service_area }}에 집중하고 있습니다. 다른 지역도 신청을 남겨 주시면 건물이 모일 때 연락드립니다.</p>
+  </details>
+  <details>
+    <summary>제 정보는 업체에 넘어가나요?</summary>
+    <p>공동구매 참여 신청에서 따로 동의하신 경우에만 견적에 필요한 건물 정보(위치 구·동, 유형, 면적, 층수)를 업체에 전달합니다. 이름과 전화번호는 전달하지 않습니다.</p>
+  </details>
+</section>
+{% endblock %}
