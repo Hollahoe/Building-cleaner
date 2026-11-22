@@ -1,6 +1,6 @@
 {% extends "admin/_layout.html" %}
 {% block admin %}
-<h1>무료 진단 신청</h1>
+<h1>상담 신청</h1>
 {% if not leads %}<p>아직 신청이 없습니다.</p>{% endif %}
 {% for l in leads %}
 <article class="admin-card" id="lead-{{ l.id }}">

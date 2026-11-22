@@ -7,13 +7,24 @@
 from __future__ import annotations
 
 import re
-from datetime import date
 from typing import Any
 
 from starlette.datastructures import FormData
 
-from .db import LEAD_STATUSES, PARTICIPATION_STATUSES
-from .rounds import ALLOWED_CATEGORIES, ROUND_STATUSES, TierError, parse_tiers, tiers_to_json
+from .db import LEAD_STATUSES
+
+# 협력 업체가 맡을 수 있는 용역 항목.
+# 보험·세무·법률·임대차 중개는 넣지 않습니다. 자격 없이 소개·알선하고 대가를 받으면
+# 법 위반이 될 수 있습니다(docs/legal-checklist.md).
+PARTNER_CATEGORIES: tuple[str, ...] = (
+    "청소",
+    "승강기 유지보수",
+    "소방 점검",
+    "CCTV·보안",
+    "방역",
+    "저수조·정화조 청소",
+    "기타 시설 용역",
+)
 
 BUILDING_TYPES: tuple[str, ...] = (
     "꼬마빌딩(상가·사무실)",
@@ -135,7 +146,7 @@ def _contact_and_building(form: FormData, errors: Errors) -> dict[str, Any]:
     return {
         "name": _text(form, "name", "이름", errors, max_len=30, required=True),
         "phone": _phone(form, errors),
-        "district": _text(form, "district", "건물 위치(구·동)", errors, max_len=40, required=True),
+        "district": _text(form, "district", "건물 주소", errors, max_len=100, required=True),
         "building_type": _choice(form, "building_type", "건물 유형", BUILDING_TYPES, errors),
         "floor_area": _text(form, "floor_area", "연면적", errors, max_len=20),
         "floors": _int(form, "floors", "층수", errors, lo=1, hi=60),
@@ -161,51 +172,11 @@ def validate_diagnosis(form: FormData) -> tuple[dict[str, Any], Errors]:
     return data, errors
 
 
-def validate_join(form: FormData) -> tuple[dict[str, Any], Errors]:
-    errors: Errors = {}
-    data = _contact_and_building(form, errors)
-    data["current_cost"] = _money(form, "current_cost", "지금 내는 월 비용", errors)
-    data["consent_vendor_share"] = 1 if _checked(form, "consent_vendor_share") else 0
-    _require_collect_consent(form, errors)
-    return data, errors
-
-
 def _categories(form: FormData, errors: Errors, label: str = "항목") -> str:
-    picked = [c for c in form.getlist("categories") if c in ALLOWED_CATEGORIES]
+    picked = [c for c in form.getlist("categories") if c in PARTNER_CATEGORIES]
     if not picked:
         errors["categories"] = f"{label}을(를) 하나 이상 골라 주세요."
     return ", ".join(dict.fromkeys(picked))
-
-
-def validate_demand(form: FormData, service_area: str,
-                    service_dongs: tuple[str, ...]) -> tuple[dict[str, Any], Errors]:
-    """공동구매 희망 등록. 동네는 목록에서 고르거나 직접 적습니다."""
-    errors: Errors = {}
-    data: dict[str, Any] = {
-        "name": _text(form, "name", "이름", errors, max_len=30, required=True),
-        "phone": _phone(form, errors),
-        "building_type": _choice(form, "building_type", "건물 유형", BUILDING_TYPES, errors),
-        "floor_area": _text(form, "floor_area", "연면적", errors, max_len=20),
-        "floors": _int(form, "floors", "층수", errors, lo=1, hi=60),
-        "current_cost": _money(form, "current_cost", "지금 내는 월 비용", errors),
-        "message": _text(form, "message", "남길 말", errors, max_len=1000),
-        "consent_marketing": 1 if _checked(form, "consent_marketing") else 0,
-    }
-    dong = str(form.get("dong") or "").strip()
-    other = " ".join(str(form.get("area_other") or "").split())
-    data["dong"], data["area_other"] = dong, other
-    if dong and dong in service_dongs:
-        data["area"] = f"{service_area} {dong}"
-    elif other:
-        if len(other) > 40:
-            errors["area_other"] = "동네는 40자 이내로 적어 주세요."
-        data["area"] = other
-    else:
-        errors["area_other" if not service_dongs else "dong"] = "건물이 있는 동네를 골라 주시거나 적어 주세요."
-        data["area"] = ""
-    data["categories"] = _categories(form, errors, "공동구매하고 싶은 항목")
-    _require_collect_consent(form, errors)
-    return data, errors
 
 
 BULK_DISCOUNT_CHOICES: tuple[str, ...] = ("가능", "협의", "어려움")
@@ -232,37 +203,6 @@ def validate_partner(form: FormData) -> tuple[dict[str, Any], Errors]:
     return data, errors
 
 
-def validate_round(form: FormData) -> tuple[dict[str, Any], Errors]:
-    errors: Errors = {}
-    data: dict[str, Any] = {
-        "title": _text(form, "title", "제목", errors, max_len=80, required=True),
-        "category": _choice(form, "category", "항목", ALLOWED_CATEGORIES, errors),
-        "district": _text(form, "district", "지역", errors, max_len=40, required=True),
-        "summary": _text(form, "summary", "한 줄 소개", errors, max_len=200, required=True),
-        "details": _text(form, "details", "상세 설명", errors, max_len=3000),
-        "target_buildings": _int(form, "target_buildings", "목표 건물 수", errors,
-                                 lo=1, hi=1000, required=True),
-        "status": _choice(form, "status", "상태", tuple(ROUND_STATUSES), errors),
-        "price_note": _text(form, "price_note", "가격 안내", errors, max_len=500, required=True),
-        "fee_disclosure": _text(form, "fee_disclosure", "운영자 보수·업체 대가 공개", errors,
-                                max_len=500, required=True),
-    }
-    raw_deadline = str(form.get("deadline") or "").strip()
-    try:
-        data["deadline"] = date.fromisoformat(raw_deadline).isoformat()
-    except ValueError:
-        errors["deadline"] = "마감일을 YYYY-MM-DD 형식으로 적어 주세요."
-        data["deadline"] = raw_deadline
-    tiers_text = str(form.get("tiers") or "")
-    data["tiers_text"] = tiers_text
-    try:
-        data["tiers_json"] = tiers_to_json(parse_tiers(tiers_text))
-    except TierError as exc:
-        errors["tiers"] = str(exc)
-        data["tiers_json"] = None
-    return data, errors
-
-
 def validate_status_update(form: FormData, statuses: tuple[str, ...]) -> tuple[str, str, Errors]:
     errors: Errors = {}
     status = _choice(form, "status", "상태", statuses, errors)
@@ -271,4 +211,3 @@ def validate_status_update(form: FormData, statuses: tuple[str, ...]) -> tuple[s
 
 
 LEAD_STATUS_CHOICES = LEAD_STATUSES
-PARTICIPATION_STATUS_CHOICES = PARTICIPATION_STATUSES

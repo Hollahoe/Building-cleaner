@@ -85,7 +85,6 @@ cp .env.example .env
 - 다른 포트: `run_web.py --port 8010`
 - 코드 고치면 자동 재시작: `run_web.py --reload`
 - 테스트: `.venv\Scripts\python -m pytest`
-- 화면 확인용 예시 공동구매 넣기: `.venv\Scripts\python -m app.seed --demo` (운영 DB에는 쓰지 마세요)
 
 ## 5. 코드가 아닌 파일은 어디에 있나
 

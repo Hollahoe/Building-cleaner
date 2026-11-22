@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
 {% block title %}협력 업체 등록 · {{ s.brand_name }}{% endblock %}
-{% block description %}{{ s.service_area }}에서 여러 건물을 한 번에 맡을 청소·승강기·소방 협력 업체를 찾습니다.{% endblock %}
+{% block description %}{{ s.service_area }}에서 꼬마빌딩의 점검·청소·수리를 맡을 협력 업체를 찾습니다.{% endblock %}
 {% block content %}
 <h1>협력 업체 등록</h1>
-<p class="lead">{{ s.service_area }}에서 같은 동네 건물 여러 곳을 한 번에 맡을 업체를 찾습니다. 공동구매 신청이 모이면 등록하신 업체께 묶음 견적을 요청드립니다.</p>
+<p class="lead">{{ s.service_area }}에서 저희가 관리하는 건물의 점검·청소·수리를 맡을 업체를 찾습니다. 확인한 뒤 연락드립니다.</p>
 <ul class="plain">
   <li>계약은 각 건물주님과 업체가 직접 맺습니다.</li>
-  <li>운영자가 업체로부터 받는 대가가 있다면 공동구매 페이지에 공개합니다.</li>
-  <li>업종별 등록·신고(예: 승강기 유지관리업 등록, 건물위생관리업 신고)를 확인한 뒤 견적을 요청드립니다.</li>
+  <li>운영자가 업체로부터 받는 대가가 있다면 건물주님께 미리 알립니다.</li>
+  <li>업종별 등록·신고(예: 승강기 유지관리업 등록, 건물위생관리업 신고)와 가격표를 확인하고 현장 평가를 거친 뒤 일을 맡깁니다.</li>
 </ul>
 {% if errors %}<p class="error-summary" role="alert">입력한 내용을 확인해 주세요.</p>{% endif %}
 <form method="post" action="/partners" class="form" novalidate>

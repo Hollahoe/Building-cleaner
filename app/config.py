@@ -14,15 +14,11 @@ from dataclasses import dataclass
 class Settings:
     brand_name: str = "빌딩모아관리"
     service_area: str = "마포구"
-    # 공동구매 희망 등록에서 고르는 동네 목록. 비어 있으면 직접 입력만 받습니다.
-    service_dongs: tuple[str, ...] = ()
-    # 같은 동네·같은 항목에 이만큼 모이면 업체 견적을 받아 공동구매를 엽니다.
-    demand_threshold: int = 5
     contact_phone: str = ""
     contact_email: str = ""
     kakao_url: str = ""
     business_info: str = "사업자 정보는 사업자등록 후 기재합니다."
-    fee_text: str = "줄어든 운영비의 일부만 보수로 받습니다. 줄지 않으면 받지 않습니다."
+    fee_text: str = "정해진 월 요금으로 받습니다. 가격표는 정해지는 대로 이 화면에 공개합니다."
     privacy_officer: str = ""
     admin_password: str = ""
     # Supabase 등 Postgres 연결 주소. 있으면 SQLite 대신 이걸 씁니다.
@@ -38,25 +34,11 @@ def _env_bool(name: str, default: bool) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _env_int(name: str, default: int) -> int:
-    raw = os.getenv(name, "").strip()
-    try:
-        return int(raw) if raw else default
-    except ValueError:
-        return default
-
-
-def _env_list(name: str) -> tuple[str, ...]:
-    return tuple(x.strip() for x in os.getenv(name, "").split(",") if x.strip())
-
-
 def load_settings() -> Settings:
     d = Settings()
     settings = Settings(
         brand_name=os.getenv("BRAND_NAME", d.brand_name),
         service_area=os.getenv("SERVICE_AREA", d.service_area),
-        service_dongs=_env_list("SERVICE_DONGS"),
-        demand_threshold=max(1, _env_int("DEMAND_THRESHOLD", d.demand_threshold)),
         contact_phone=os.getenv("CONTACT_PHONE", d.contact_phone),
         contact_email=os.getenv("CONTACT_EMAIL", d.contact_email),
         kakao_url=os.getenv("KAKAO_URL", d.kakao_url),
