@@ -1,0 +1,30 @@
+{% extends "admin/_layout.html" %}
+{% block admin %}
+<h1>협력 업체</h1>
+<p>견적을 요청하기 전에 업종별 등록·신고증 사본을 받아 확인하세요(<code>docs/legal-checklist.md</code>). <a href="/admin/export/partners.csv">엑셀(CSV)</a></p>
+{% if not partners %}<p>아직 등록한 업체가 없습니다. 견적 요청서(<code>sourcing/rfq-template.md</code>)를 보낼 때 <a href="/partners">/partners</a> 링크도 함께 보내 보세요.</p>{% endif %}
+{% for p in partners %}
+<article class="admin-card" id="pt-{{ p.id }}">
+  <p class="card-meta">#{{ p.id }} · {{ p.created_at[:16].replace('T', ' ') }} · <strong>{{ p.status }}</strong></p>
+  <h2>{{ p.company }}</h2>
+  <dl class="facts">
+    <dt>담당자</dt><dd>{{ p.contact_name }} · <a href="tel:{{ p.phone }}">{{ p.phone }}</a>{% if p.email %} · {{ p.email }}{% endif %}</dd>
+    <dt>용역 항목</dt><dd>{{ p.categories }}</dd>
+    <dt>작업 지역</dt><dd>{{ p.service_area }}</dd>
+    <dt>등록·신고</dt><dd>{{ p.license_info or '미기재 (확인 필요)' }}</dd>
+    <dt>묶음 할인</dt><dd>{{ p.bulk_discount }}</dd>
+    <dt>남긴 말</dt><dd class="prewrap">{{ p.message or '-' }}</dd>
+  </dl>
+  <form method="post" action="/admin/partners/{{ p.id }}" class="inline-form">
+    <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token }}">
+    <label for="ptstatus-{{ p.id }}">상태</label>
+    <select id="ptstatus-{{ p.id }}" name="status">
+      {% for st in statuses %}<option value="{{ st }}"{% if st == p.status %} selected{% endif %}>{{ st }}</option>{% endfor %}
+    </select>
+    <label for="ptmemo-{{ p.id }}">메모</label>
+    <textarea id="ptmemo-{{ p.id }}" name="admin_memo" rows="2">{{ p.admin_memo }}</textarea>
+    <button class="btn btn-small" type="submit">저장</button>
+  </form>
+</article>
+{% endfor %}
+{% endblock %}

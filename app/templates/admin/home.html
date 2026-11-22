@@ -1,0 +1,18 @@
+{% extends "admin/_layout.html" %}
+{% block admin %}
+<h1>요약</h1>
+
+<section>
+  <h2>상담 신청</h2>
+  <div class="table-scroll"><table class="data">
+    <thead><tr>{% for k in lead_counts %}<th scope="col">{{ k }}</th>{% endfor %}</tr></thead>
+    <tbody><tr>{% for k, v in lead_counts.items() %}<td>{{ v }}</td>{% endfor %}</tr></tbody>
+  </table></div>
+  <p><a href="/admin/leads">상담 신청 전체 보기</a> · <a href="/admin/partners">협력 업체 {{ partner_count }}곳 보기</a></p>
+</section>
+
+<section>
+  <h2>엑셀(CSV) 내려받기</h2>
+  <p><a href="/admin/export/leads.csv">상담 신청</a> · <a href="/admin/export/partners.csv">협력 업체</a></p>
+</section>
+{% endblock %}

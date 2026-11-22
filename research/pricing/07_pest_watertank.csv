@@ -1,0 +1,15 @@
+﻿item,source,price_krw,unit,condition,date,url,verification
+방역소독,숨고 방역소독 가격 페이지,100000,원/건,"평균(최저 60,000 최고 250,000)",미상,https://soomgo.com/prices/%EB%B0%A9%EC%97%AD%EC%86%8C%EB%8F%85,검색 결과만
+방역소독,숨고 지역 페이지(강서·마포 등),94000,원/건,"평균(최저 75,000 최고 130,000)",미상,https://soomgo.com/local-recommend/서울-마포구/방역소독,검색 결과만
+방역소독,세스코 공식 안내(검색 요약),30000,원/월~,"""월 3만원대부터"", 정찰제 아님",미상,https://www.cesco.co.kr/homepage/newsletter/detail?newsletterId=27&pageNo=1&pageType=typeAll,검색 결과만
+방역소독,블로그 정리(사업장),70000,원/월(하단),소규모 음식점 20~30평 월 7~15만,약 1년 전,https://reviewfim.com/%EC%84%B8%EC%8A%A4%EC%BD%94-%EC%82%AC%EC%97%85%EC%9E%A5-%EB%B9%84%EC%9A%A9/,검색 결과만
+방역소독,블로그 정리(사업장),150000,원/월(상단),같은 범위 상단; 카페 25평 사례 월 9만,약 1년 전,https://reviewfim.com/%EC%84%B8%EC%8A%A4%EC%BD%94-%EC%82%AC%EC%97%85%EC%9E%A5-%EB%B9%84%EC%9A%A9/,검색 결과만
+방역소독,블로그 정리(가정 정기),23000,원/월,"10평 이하 정기관리(11~30평 27,000 / 51~80평 36,000)",약 2년 전,https://v.daum.net/v/p2VMvjQ00U?f=p,검색 결과만
+방역소독,감염병예방법 시행령 제24조,0,의무 아님,"건물 단위 소독의무는 사무실용·복합용도 연면적 2,000㎡ 이상 등; 300㎡ 이상 식품접객업소는 업소 단위 의무",2026-06-24 시행본,https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=285787,원문 확인
+저수조청소,"블로그(미소, 도봉)",250000,원/회(20~30만 중간),30톤 미만 단일 탱크,미상,https://miso.kr/blog/%EB%8F%84%EB%B4%89-%EB%AC%BC%ED%83%B1%ED%81%AC-%EC%A0%80%EC%88%98%EC%A1%B0-%EC%B2%AD%EC%86%8C-%EB%B9%84%EC%9A%A9,검색 결과만
+저수조청소,"블로그(미소, 구미)",400000,"원/회(30~50만 중간, VAT별도)",10톤 이하 소형 빌라·주택,미상,https://miso.kr/blog/%EA%B5%AC%EB%AF%B8-%EB%AC%BC%ED%83%B1%ED%81%AC-%EC%A0%80%EC%88%98%EC%A1%B0-%EC%B2%AD%EC%86%8C-%EB%B9%84%EC%9A%A9,검색 결과만
+저수조청소,"블로그(미소, 울산)",500000,원/회(40~60만 중간),5톤 이하 옥상 물탱크,미상,https://miso.kr/blog/%EC%9A%B8%EC%82%B0-%EB%AC%BC%ED%83%B1%ED%81%AC-%EC%A0%80%EC%88%98%EC%A1%B0-%EC%B2%AD%EC%86%8C-%EB%B9%84%EC%9A%A9,검색 결과만
+저수조청소,"블로그(미소, 전국 평균)",500000,원/회,평균 50만,미상,https://miso.kr/blog/%EB%AC%BC%ED%83%B1%ED%81%AC-%EC%A0%80%EC%88%98%EC%A1%B0-%EC%B2%AD%EC%86%8C-%EB%B9%84%EC%9A%A9,검색 결과만
+저수조청소,온라인 상품(크린인천),150000,원/회~,연2회 청소+수질검사 권장 문구,미상,https://eum365.com/shop/item.php?it_id=1627022793,검색 결과만
+저수조청소,업체 요율표(월드종합환경산업),7000,원/톤,"고가수조, 2001년 개정(구자료)",2001,https://m.cafe.daum.net/cleanfull/3kgm/31,검색 결과만
+저수조청소,수도법 시행령 제50조,0,신고·관리 대상 아님,"저수조 신고 대상: 연면적 5,000㎡ 이상, 2개 이상 용도 2,000㎡ 이상, 업무시설 3,000㎡ 이상 등",2026-06-09 시행본,https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=286843,원문 확인

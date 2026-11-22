@@ -1,0 +1,18 @@
+﻿metric,category,mapo_running_elevators,buildings_by_address,note
+mapo_running_elevators_total,,7626,3728,15112638 snapshot 2026-06-30
+matched_to_15112639_2026H1,,4326,2191,join key 검사결과이력조회코드; 15112639 covers 검사일자 2026-01-01~2026-06-30
+latest_1st_round_result_2026H1,합격,2287,1310,"1차 검사결과 (검사차수=1), 최신 1건"
+latest_1st_round_result_2026H1,조건부합격,1810,974,"1차 검사결과 (검사차수=1), 최신 1건"
+latest_1st_round_result_2026H1,보완,23,11,"1차 검사결과 (검사차수=1), 최신 1건"
+latest_1st_round_result_2026H1,불합격,1,1,"1차 검사결과 (검사차수=1), 최신 1건"
+latest_record_result_2026H1,합격,2287,1310,차수 무관 최신 기록
+latest_record_result_2026H1,조건후합격,1374,760,차수 무관 최신 기록
+latest_record_result_2026H1,조건부합격,587,306,차수 무관 최신 기록
+latest_record_result_2026H1,차기안전검사,53,51,차수 무관 최신 기록
+latest_record_result_2026H1,보완후합격,23,11,차수 무관 최신 기록
+latest_record_result_2026H1,조건후불합격,1,1,차수 무관 최신 기록
+latest_record_result_2026H1,불합격,1,1,차수 무관 최신 기록
+inspection_kind_of_latest_1st_round,정기,3487,,
+inspection_kind_of_latest_1st_round,정밀,407,,
+inspection_kind_of_latest_1st_round,설치,190,,
+inspection_kind_of_latest_1st_round,수시,37,,
